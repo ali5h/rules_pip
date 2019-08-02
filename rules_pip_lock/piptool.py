@@ -133,7 +133,7 @@ def main():
 #
 # Generated from {input}
 
-load("@com_github_alish_rules_pip_lock//python:whl.bzl", "whl_library")
+load("@com_github_alish_rules_pip_lock//:defs.bzl", "whl_library")
 
 def pip_install():
   {whl_libraries}

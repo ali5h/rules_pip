@@ -6,8 +6,9 @@ usage() {
 }
 
 if [ "$#" -eq 0 ] ; then
-    bazel build --build_python_zip //rules_pip_lock:piptool //rules_pip_lock:whl
-    install $(bazel info bazel-bin --python_version=PY2)/rules_pip_lock/{piptool,whl}.zip tools/
+    bazel test //...
+    bazel build //rules_pip_lock:piptool.par //rules_pip_lock:whl.par
+    install $(bazel info bazel-bin)/rules_pip_lock/{piptool,whl}.par tools/
 else
   usage
 fi

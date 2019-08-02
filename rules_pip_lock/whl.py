@@ -7,8 +7,6 @@ import pkg_resources
 import pkginfo
 from pip._internal.commands import WheelCommand
 
-from rules_pip_lock import piptool
-
 
 def download_whl(pkg, directory, constraint):
     """Downloads wheel for a package
@@ -122,7 +120,7 @@ load("{requirements}//:requirements.bzl", "requirement")
 py_library(
     name = "pkg",
     srcs = glob(["**/*.py"]),
-    data = glob(["**/*"], exclude=["**/*.py", "**/* *", "BUILD", "WORKSPACE"]),
+    data = glob(["**/*"], exclude=["**/*.py", "**/*.pyc", "**/* *", "BUILD", "WORKSPACE"]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
     imports = ["."],

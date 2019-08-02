@@ -3,13 +3,13 @@ workspace(name = "com_github_alish_rules_pip_lock")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 
 
-load("//python:pip.bzl", "pip_import", "repositories")
+load("//:defs.bzl", "pip_import", "repositories")
 
 repositories()
 
 pip_import(
     name = "piptool_deps",
-    requirements = "//python:requirements.txt",
+    requirements = "//rules_pip_lock:requirements.txt",
 )
 
 load(
