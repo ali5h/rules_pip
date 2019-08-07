@@ -12,6 +12,7 @@ par_binary(
         requirement("pip"),
         requirement("pkginfo"),
         requirement("wheel"),
+        requirement("setuptools"),
     ],
 )
 

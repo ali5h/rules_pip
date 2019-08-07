@@ -84,7 +84,7 @@ def repositories():
             strip_prefix = "rules_python-120590e2f2b66e5590bf4dc8ebef9c5338984775",
             urls = ["https://github.com/bazelbuild/rules_python/archive/120590e2f2b66e5590bf4dc8ebef9c5338984775.zip"],
         )
-    if "subpar"" not in native.existing_rules():
+    if "subpar" not in native.existing_rules():
         http_archive(
             name = "subpar",
             sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
