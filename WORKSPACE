@@ -1,14 +1,13 @@
 workspace(name = "com_github_alish_rules_pip_lock")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-
-
 load("//:defs.bzl", "pip_import", "repositories")
 
 repositories()
 
 pip_import(
     name = "piptool_deps",
+    python_version = "2.7",
     requirements = "//rules_pip_lock:requirements.txt",
 )
 
@@ -19,6 +18,18 @@ load(
 
 _piptool_install()
 
+pip_import(
+    name = "piptool_deps_3",
+    python_version = "3.7",
+    requirements = "//rules_pip_lock:requirements.txt",
+)
+
+load(
+    "@piptool_deps_3//:requirements.bzl",
+    _piptool_install_3 = "pip_install",
+)
+
+_piptool_install_3()
 
 http_file(
     name = "grpc_whl",
@@ -107,5 +118,5 @@ http_file(
     # From https://pypi.python.org/pypi/google-cloud-spanner
     urls = [("https://pypi.python.org/packages/b1/df/" +
              "96686bc6abafacb579334f8c61be2f025f1be161d266893d17b47afd7685/" +
-             "google_cloud_spanner-1.9.0-py2.py3-none-any.whl")]
+             "google_cloud_spanner-1.9.0-py2.py3-none-any.whl")],
 )

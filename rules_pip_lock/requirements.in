@@ -1,6 +1,5 @@
 mock
 pkginfo
 pip==19.1.1
-wheel
 setuptools
 pip-tools

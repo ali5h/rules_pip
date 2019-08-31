@@ -1,42 +1,48 @@
+"""downloads and parses info of a pkg and generates a BUILD file for it"""
 import argparse
 import glob
 import os
-import zipfile
 
 import pkg_resources
 import pkginfo
-from pip._internal.commands import WheelCommand
+import platform
 
+def install_package(pkg, directory, python_version, pip_args):
+    """Downloads wheel for a package. Assumes python binary provided has
+    pip and wheel package installed.
 
-def download_whl(pkg, directory, constraint):
-    """Downloads wheel for a package
-
-    :param pkg:
-    :param directory:
-    :param pip_args:
-    :returns:
-    :rtype:
-
-    """
-    cmd = WheelCommand()
-    args = ["--wheel-dir", directory, "--no-deps", "--constraint", constraint]
-    args += [pkg]
-    cmd.run(*cmd.parse_args(args))
-    return glob.glob(os.path.join(directory, "*.whl"))[0]
-
-
-def expand(whl_path, directory):
-    """Expands a wheel into a directory
-
-    :param whl_path: path to wheel file
-    :param directory: destination
+    :param pkg: package name
+    :param directory: destination directory to download the wheel file in
+    :param python: python binary path used to run pip command
+    :param pip_args: extra pip args sent to pip
+    :returns: path to the wheel file
+    :rtype: str
 
     """
-    with zipfile.ZipFile(whl_path, "r") as whl:
-        whl.extractall(directory)
+    from pip._internal.commands import InstallCommand
+    pip_args = [
+        "--target",
+        directory,
+        "--no-deps",
+        "--upgrade",
+        "--python-version",
+        python_version,
+        pkg,
+    ] + pip_args
+    cmd = InstallCommand()
+    cmd.run(*cmd.parse_args(pip_args))
+    return glob.glob(os.path.join(directory, "*.dist-info"))[0]
 
 
 def dependencies(whl_path, extra=None):
+    """find dependencies of a wheel.
+
+    :param whl_path: path to wheel
+    :param extra: find additional dependencies for the extra instead
+    :returns: list of dependencies
+    :rtype: list
+
+    """
     pkg = pkginfo.Wheel(whl_path)
     ret = []
     for dist in pkg.requires_dist:
@@ -82,7 +88,7 @@ def main():
     )
     parser.add_argument(
         "--constraint",
-        help="Extra args passed to pip. (e.g. --pip-arg={'-c','reqs.txt'}",
+        help="path to requirement file used for pip constraints",
         required=True,
     )
     parser.add_argument(
@@ -90,9 +96,18 @@ def main():
         action="append",
         help="The set of extras for which to generate library targets.",
     )
+    parser.add_argument(
+        "--python-version",
+        help="The python version to evaluate the dependencies for",
+        required=True,
+    )
 
     args = parser.parse_args()
-    whl_path = download_whl(args.package, args.directory, args.constraint)
+
+    platform.python_version = lambda: args.python_version
+
+    pip_args = ["-c", args.constraint]
+    whl_path = install_package(args.package, args.directory, args.python_version, pip_args)
 
     extras = "\n".join(
         [
@@ -120,7 +135,16 @@ load("{requirements}//:requirements.bzl", "requirement")
 py_library(
     name = "pkg",
     srcs = glob(["**/*.py"]),
-    data = glob(["**/*"], exclude=["**/*.py", "**/*.pyc", "**/* *", "BUILD", "WORKSPACE"]),
+    data = glob(["**/*"], exclude = [
+        "**/*.py",
+        "**/*.pyc",
+        "**/* *",
+        "BUILD",
+        "WORKSPACE",
+        "bin/*",
+        "*.dist-info/*",
+        "__pycache__",
+    ]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
     imports = ["."],
@@ -136,7 +160,6 @@ py_library(
         extras=extras,
     )
 
-    expand(whl_path, args.directory)
     with open(os.path.join(args.directory, "BUILD"), "w") as f:
         f.write(result)
 

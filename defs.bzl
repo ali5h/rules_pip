@@ -2,13 +2,31 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+_PYTHON_BIN_PATH = "PYTHON_BIN_PATH"
+
+def _get_python_bin(repository_ctx):
+    """Gets the python bin path."""
+    python_bin = repository_ctx.os.environ.get(_PYTHON_BIN_PATH)
+    if python_bin != None:
+        return python_bin
+    python_bin_path = repository_ctx.which("python")
+    if python_bin_path != None:
+        return str(python_bin_path)
+    fail("Cannot find python in PATH, please make sure " +
+         "python is installed and add its directory in PATH, or --define " +
+         "%s='/something/else'.\nPATH=%s" % (
+             _PYTHON_BIN_PATH,
+             repository_ctx.os.environ.get("PATH", ""),
+         ))
+
 def _pip_import_impl(repository_ctx):
     """Core implementation of pip_import."""
     repository_ctx.file("BUILD", "")
     repository_ctx.symlink(repository_ctx.attr.requirements, "requirements.txt")
 
-    # To see the output, pass: quiet=False
+    python_bin = _get_python_bin(repository_ctx)
     result = repository_ctx.execute([
+        python_bin,
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
         repository_ctx.attr.name,
@@ -16,6 +34,8 @@ def _pip_import_impl(repository_ctx):
         repository_ctx.path("requirements.txt"),
         "--output",
         repository_ctx.path("requirements.bzl"),
+        "--python-version",
+        repository_ctx.attr.python_version,
     ])
 
     if result.return_code:
@@ -26,6 +46,11 @@ pip_import = repository_rule(
         "requirements": attr.label(
             mandatory = True,
             allow_single_file = True,
+            doc = "requirement.txt file generatd by pip-compile",
+        ),
+        "python_version": attr.string(
+            doc = "python-version for which fetch, install and find the " +
+                  "dependencies of packages. It is passed to 'pip install'",
         ),
         "_script": attr.label(
             executable = True,
@@ -34,13 +59,18 @@ pip_import = repository_rule(
             cfg = "host",
         ),
     },
+    environ = [
+        _PYTHON_BIN_PATH,
+    ],
     implementation = _pip_import_impl,
 )
 
 def _whl_impl(repository_ctx):
     """Core implementation of whl_library."""
 
+    python_bin = _get_python_bin(repository_ctx)
     args = [
+        python_bin,
         repository_ctx.path(repository_ctx.attr._script),
         "--requirements",
         repository_ctx.attr.requirements_repo,
@@ -50,14 +80,16 @@ def _whl_impl(repository_ctx):
         repository_ctx.path(
             Label("%s//:requirements.txt" % repository_ctx.attr.requirements_repo),
         ),
+        "--python-version",
+        repository_ctx.attr.python_version,
         repository_ctx.attr.pkg,
     ]
-
     if repository_ctx.attr.extras:
         args += [
             "--extras=%s" % extra
             for extra in repository_ctx.attr.extras
         ]
+
     result = repository_ctx.execute(args)
     if result.return_code:
         fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
@@ -67,12 +99,16 @@ whl_library = repository_rule(
         "pkg": attr.string(),
         "requirements_repo": attr.string(),
         "extras": attr.string_list(),
+        "python_version": attr.string(),
         "_script": attr.label(
             executable = True,
             default = Label("//tools:whl.par"),
             cfg = "host",
         ),
     },
+    environ = [
+        _PYTHON_BIN_PATH,
+    ],
     implementation = _whl_impl,
 )
 

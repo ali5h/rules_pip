@@ -48,33 +48,45 @@ def as_tuple(ireq):
     return name, version, extras
 
 
-def repository_name(name, version):
+def repository_name(name, version, python_version):
     """Returns the canonical name of the Bazel repository for a package.
 
     :param name: package nane
     :param version: package verion
+    :param python_version: python major version
     :returns: repo name
     :rtype: str
 
     """
-    canonical = "pypi__{}_{}".format(name, version)
+    canonical = "pypi__{}__{}_{}".format(python_version, name, version)
     return clean_name(canonical)
 
 
-def whl_library(req, pip_repo_name):
+def whl_library(name, extras, repo_name, pip_repo_name, python_version):
+    """FIXME! briefly describe function
+
+    :param name: package nane
+    :param extras: extras for this lib
+    :param repo_name: repo name used for this lib
+    :param pip_repo_name: pip_import repo
+    :returns: whl_library rule definition
+    :rtype: str
+
+    """
     # Indentation here matters
-    name, version, extras = as_tuple(req)
     return """
   if "{repo_name}" not in native.existing_rules():
     whl_library(
         name = "{repo_name}",
         pkg = "{name}",
         requirements_repo = "@{pip_repo_name}",
+        python_version = "{python_version}",
         extras = [{extras}]
     )""".format(
         name=name,
-        repo_name=repository_name(name, version),
+        repo_name=repo_name,
         pip_repo_name=pip_repo_name,
+        python_version=python_version,
         extras=",".join(['"%s"' % extra for extra in extras]),
     )
 
@@ -101,30 +113,33 @@ def main():
         help=("The requirements.bzl file to export."),
         required=True,
     )
+    parser.add_argument(
+        "--python-version", help="The python version used to evaluate the dependencies for.",
+        required=True,
+    )
     args = parser.parse_args()
+
     reqs = get_requirements(args.input)
 
     whl_targets = []
     whl_libraries = []
     for req in reqs:
         name, version, extras = as_tuple(req)
+        repo_name = repository_name(name, version, args.python_version)
         whl_targets.append(
             ",".join(
-                ['"%s": "@%s//:pkg"' % (name.lower(), repository_name(name, version))]
+                ['"%s": "@%s//:pkg"' % (name.lower(), repo_name)]
                 + [
                     # For every extra that is possible from this requirements.txt
                     '"%s[%s]": "@%s//:%s"'
-                    % (
-                        name.lower(),
-                        extra.lower(),
-                        repository_name(name, version),
-                        extra,
-                    )
+                    % (name.lower(), extra.lower(), repo_name, extra)
                     for extra in extras
                 ]
             )
         )
-        whl_libraries.append(whl_library(req, args.name))
+        whl_libraries.append(
+            whl_library(name, extras, repo_name, args.name, args.python_version)
+        )
 
     with open(args.output, "w") as _f:
         _f.write(
