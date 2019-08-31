@@ -1,0 +1,18 @@
+#!/bin/bash -eu
+
+usage() {
+  echo "Usage: $0" 1>&2
+  exit 1
+}
+
+DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+export CUSTOM_COMPILE_COMMAND="$(basename "$0")"
+
+if [ "$#" -eq 0 ] ; then
+    "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/rules_pip_lock/requirements.txt" "${DIR}/rules_pip_lock/requirements.in"
+    bazel test //... --test_output=errors
+    bazel build //rules_pip_lock:piptool.par //rules_pip_lock:whl.par
+    install $(bazel info bazel-bin)/rules_pip_lock/*.par tools/
+else
+  usage
+fi

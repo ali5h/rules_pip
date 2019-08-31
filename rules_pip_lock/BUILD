@@ -41,3 +41,12 @@ par_binary(
         requirement("pip"),
     ],
 )
+
+par_binary(
+    name = "compile",
+    srcs = ["compile.py"],
+    python_version = "PY2",
+    deps = [
+        requirement("pip-tools"),
+    ],
+)
