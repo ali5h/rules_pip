@@ -81,7 +81,8 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_version):
         pkg = "{name}",
         requirements_repo = "@{pip_repo_name}",
         python_version = "{python_version}",
-        extras = [{extras}]
+        extras = [{extras}],
+        pip_args = pip_args,
     )""".format(
         name=name,
         repo_name=repo_name,
@@ -150,7 +151,7 @@ def main():
 
 load("@com_github_alish_rules_pip_lock//:defs.bzl", "whl_library")
 
-def pip_install():
+def pip_install(pip_args=[]):
   {whl_libraries}
 
 _requirements = {{

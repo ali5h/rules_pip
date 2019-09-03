@@ -16,7 +16,10 @@ load(
     _piptool_install = "pip_install",
 )
 
-_piptool_install()
+_piptool_install([
+    "--only-binary",
+    ":all:",
+])
 
 pip_import(
     name = "piptool_deps_3",
@@ -29,7 +32,10 @@ load(
     _piptool_install_3 = "pip_install",
 )
 
-_piptool_install_3()
+_piptool_install_3([
+    "--only-binary",
+    ":all:",
+])
 
 http_file(
     name = "grpc_whl",

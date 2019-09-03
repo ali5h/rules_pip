@@ -83,6 +83,9 @@ def _whl_impl(repository_ctx):
         "--python-version",
         repository_ctx.attr.python_version,
         repository_ctx.attr.pkg,
+    ] + [
+        "--pip-arg=%s" % pip_arg
+        for pip_arg in repository_ctx.attr.pip_args
     ]
     if repository_ctx.attr.extras:
         args += [
@@ -100,6 +103,7 @@ whl_library = repository_rule(
         "requirements_repo": attr.string(),
         "extras": attr.string_list(),
         "python_version": attr.string(),
+        "pip_args": attr.string_list(default = []),
         "_script": attr.label(
             executable = True,
             default = Label("//tools:whl.par"),

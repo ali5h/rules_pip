@@ -92,6 +92,13 @@ def main():
         required=True,
     )
     parser.add_argument(
+        "--pip-arg",
+        action="append",
+        dest="pip_args",
+        help="Extra pip args. (e.g. --pip_arg={'-c','reqs.txt'}",
+        default=[],
+    )
+    parser.add_argument(
         "--extras",
         action="append",
         help="The set of extras for which to generate library targets.",
@@ -106,7 +113,7 @@ def main():
 
     platform.python_version = lambda: args.python_version
 
-    pip_args = ["-c", args.constraint]
+    pip_args = args.pip_args + ["-c", args.constraint]
     whl_path = install_package(args.package, args.directory, args.python_version, pip_args)
 
     extras = "\n".join(
