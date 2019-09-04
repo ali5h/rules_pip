@@ -146,8 +146,6 @@ def main():
         _f.write(
             """\
 # Install pip requirements.
-#
-# Generated from {input}
 
 load("@com_github_alish_rules_pip_lock//:defs.bzl", "whl_library")
 
@@ -164,7 +162,6 @@ def requirement(name):
     fail("Could not find pip-provided dependency: '%s'" % name)
   return _requirements[name_key]
 """.format(
-                input=args.input,
                 whl_libraries="\n".join(whl_libraries),
                 mappings=",".join(whl_targets),
             )
