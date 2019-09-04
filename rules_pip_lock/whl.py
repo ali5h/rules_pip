@@ -2,6 +2,7 @@
 import argparse
 import glob
 import os
+import shutil
 
 import pkg_resources
 import pkginfo
@@ -149,8 +150,6 @@ py_library(
         "BUILD",
         "WORKSPACE",
         "bin/*",
-        "*.dist-info/*",
-        "__pycache__",
     ]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
@@ -166,6 +165,12 @@ py_library(
         ),
         extras=extras,
     )
+
+    # clean up
+    shutil.rmtree(whl_path)
+    pycache = os.path.join(args.directory, "__pycache__")
+    if os.path.exists(pycache):
+        shutil.rmtree(pycache)
 
     with open(os.path.join(args.directory, "BUILD"), "w") as f:
         f.write(result)
