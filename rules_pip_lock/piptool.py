@@ -93,6 +93,13 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_version):
 
 
 def get_requirements(requirement):
+    """Parse a requirement file
+
+    :param requirement: path to requirement file
+    :returns: list of InstallRequirement
+    :rtype: list[InstallRequirements]
+
+    """
     session = PipSession()
     return parse_requirements(requirement, session=session)
 

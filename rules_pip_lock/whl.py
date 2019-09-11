@@ -4,9 +4,12 @@ import glob
 import os
 import shutil
 
-import pkg_resources
 import pkginfo
 import platform
+from pip._internal.commands import InstallCommand
+from pip._vendor import pkg_resources
+
+
 
 def install_package(pkg, directory, python_version, pip_args):
     """Downloads wheel for a package. Assumes python binary provided has
@@ -20,7 +23,6 @@ def install_package(pkg, directory, python_version, pip_args):
     :rtype: str
 
     """
-    from pip._internal.commands import InstallCommand
     pip_args = [
         "--target",
         directory,
@@ -32,10 +34,24 @@ def install_package(pkg, directory, python_version, pip_args):
     ] + pip_args
     cmd = InstallCommand()
     cmd.run(*cmd.parse_args(pip_args))
-    return glob.glob(os.path.join(directory, "*.dist-info"))[0]
+
+    # need dist-info directory for pkg_resources to be able to find the packages
+    dist_info = glob.glob(os.path.join(directory, "*.dist-info"))[0]
+    # fix namespace packages by adding proper __init__.py files
+    namespace_packages = os.path.join(dist_info, "namespace_packages.txt")
+    if os.path.exists(namespace_packages):
+        with open(namespace_packages) as nspkg:
+          for line in nspkg.readlines():
+              namespace = line.strip().replace(".", os.sep)
+              if namespace:
+                  nspkg_init = os.path.join(directory, namespace, "__init__.py")
+                  with open(nspkg_init, "w") as nspkg:
+                      nspkg.write("__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
+
+    return pkginfo.Wheel(dist_info)
 
 
-def dependencies(whl_path, extra=None):
+def dependencies(pkg, extra=None):
     """find dependencies of a wheel.
 
     :param whl_path: path to wheel
@@ -44,7 +60,6 @@ def dependencies(whl_path, extra=None):
     :rtype: list
 
     """
-    pkg = pkginfo.Wheel(whl_path)
     ret = []
     for dist in pkg.requires_dist:
         requirement = pkg_resources.Requirement.parse(dist)
@@ -67,6 +82,11 @@ def dependencies(whl_path, extra=None):
             ret.append(requirement.name)
 
     return ret
+
+
+def _cleanup(directory, pattern):
+    for p in glob.glob(os.path.join(directory, pattern)):
+        shutil.rmtree(p)
 
 
 def main():
@@ -115,7 +135,7 @@ def main():
     platform.python_version = lambda: args.python_version
 
     pip_args = args.pip_args + ["-c", args.constraint]
-    whl_path = install_package(args.package, args.directory, args.python_version, pip_args)
+    pkg = install_package(args.package, args.directory, args.python_version, pip_args)
 
     extras = "\n".join(
         [
@@ -128,7 +148,7 @@ py_library(
 )""".format(
                 extra=extra,
                 deps=",".join(
-                    ['requirement("%s")' % d for d in dependencies(whl_path, extra)]
+                    ['requirement("%s")' % d for d in dependencies(pkg, extra)]
                 ),
             )
             for extra in args.extras or []
@@ -150,6 +170,7 @@ py_library(
         "BUILD",
         "WORKSPACE",
         "bin/*",
+        "__pycache__",
     ]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
@@ -161,16 +182,13 @@ py_library(
 {extras}""".format(
         requirements=args.requirements,
         dependencies=",".join(
-            ['requirement("%s")' % d for d in dependencies(whl_path)]
+            ['requirement("%s")' % d for d in dependencies(pkg)]
         ),
         extras=extras,
     )
 
     # clean up
-    shutil.rmtree(whl_path)
-    pycache = os.path.join(args.directory, "__pycache__")
-    if os.path.exists(pycache):
-        shutil.rmtree(pycache)
+    _cleanup(args.directory, "__pycache__")
 
     with open(os.path.join(args.directory, "BUILD"), "w") as f:
         f.write(result)

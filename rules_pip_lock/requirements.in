@@ -1,5 +1,8 @@
 mock
 pkginfo
-pip==19.1.1
+pip==19.2.3
 setuptools
 pip-tools
+google-cloud-language
+testing.postgresql
+testing.mysqld

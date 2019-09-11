@@ -2,16 +2,26 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+_VIRTUAL_ENV = "VIRTUAL_ENV"
 _PYTHON_BIN_PATH = "PYTHON_BIN_PATH"
 
 def _get_python_bin(repository_ctx):
     """Gets the python bin path."""
+
+    # if python bin is provided use that
     python_bin = repository_ctx.os.environ.get(_PYTHON_BIN_PATH)
     if python_bin != None:
-        return python_bin
+        return [python_bin]
+
+    # otw. if there is no venv just use the python in the shebang
+    venv = repository_ctx.os.environ.get(_VIRTUAL_ENV)
+    if venv == None:
+        return []
+
+    # if a venv exists just use "python"
     python_bin_path = repository_ctx.which("python")
     if python_bin_path != None:
-        return str(python_bin_path)
+        return [str(python_bin_path)]
     fail("Cannot find python in PATH, please make sure " +
          "python is installed and add its directory in PATH, or --define " +
          "%s='/something/else'.\nPATH=%s" % (
@@ -24,9 +34,7 @@ def _pip_import_impl(repository_ctx):
     repository_ctx.file("BUILD", "")
     repository_ctx.symlink(repository_ctx.attr.requirements, "requirements.txt")
 
-    python_bin = _get_python_bin(repository_ctx)
-    result = repository_ctx.execute([
-        python_bin,
+    result = repository_ctx.execute(_get_python_bin(repository_ctx) + [
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
         repository_ctx.attr.name,
@@ -60,6 +68,7 @@ pip_import = repository_rule(
         ),
     },
     environ = [
+        _VIRTUAL_ENV,
         _PYTHON_BIN_PATH,
     ],
     implementation = _pip_import_impl,
@@ -68,9 +77,7 @@ pip_import = repository_rule(
 def _whl_impl(repository_ctx):
     """Core implementation of whl_library."""
 
-    python_bin = _get_python_bin(repository_ctx)
-    args = [
-        python_bin,
+    args = _get_python_bin(repository_ctx) + [
         repository_ctx.path(repository_ctx.attr._script),
         "--requirements",
         repository_ctx.attr.requirements_repo,
@@ -111,6 +118,7 @@ whl_library = repository_rule(
         ),
     },
     environ = [
+        _VIRTUAL_ENV,
         _PYTHON_BIN_PATH,
     ],
     implementation = _whl_impl,

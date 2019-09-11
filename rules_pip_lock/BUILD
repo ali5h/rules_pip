@@ -13,12 +13,10 @@ py_library(
             "@bazel_tools//tools/python:PY2": [
                 requirement("pip"),
                 requirement("pkginfo"),
-                requirement("setuptools"),
             ],
             "@bazel_tools//tools/python:PY3": [
                 requirement_3("pip"),
                 requirement_3("pkginfo"),
-                requirement_3("setuptools"),
             ],
         },
     ),
@@ -29,9 +27,7 @@ par_binary(
     srcs = ["whl.py"],
     python_version = "PY2",
     deps = [
-        requirement("pip"),
-        requirement("pkginfo"),
-        requirement("setuptools"),
+        ":whllib",
     ],
 )
 
@@ -69,6 +65,17 @@ py_test(
         ":whllib",
         requirement_3("mock"),
     ],
+)
+
+py_test(
+    name = "namespace_test",
+    srcs = ["namespace_test.py"],
+    deps = [
+        requirement("google-cloud-language"),
+        requirement("testing.postgresql"),
+        requirement("testing.mysqld"),
+    ],
+    python_version = "PY2",
 )
 
 par_binary(
