@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 
 usage() {
   echo "Usage: $0" 1>&2
@@ -9,7 +9,11 @@ DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export CUSTOM_COMPILE_COMMAND="$(basename "$0")"
 
 if [ "$#" -eq 0 ] ; then
-    "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/rules_pip_lock/requirements.txt" "${DIR}/rules_pip_lock/requirements.in"
+    python2 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/rules_pip_lock/requirements.txt" "${DIR}/rules_pip_lock/requirements.in"
+    python2 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/tests/requirements.txt" "${DIR}/tests/requirements.in"
+
+    python3 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/rules_pip_lock/requirements3.txt" "${DIR}/rules_pip_lock/requirements.in"
+    python3 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/tests/requirements3.txt" "${DIR}/tests/requirements.in"
     bazel test //... --test_output=errors
     bazel build //rules_pip_lock:piptool.par //rules_pip_lock:whl.par
     install $(bazel info bazel-bin)/rules_pip_lock/*.par tools/

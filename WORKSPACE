@@ -20,8 +20,8 @@ _piptool_install()
 
 pip_import(
     name = "piptool_deps_3",
-    python_version = "3.7",
-    requirements = "//rules_pip_lock:requirements.txt",
+    python_version = "3.6",
+    requirements = "//rules_pip_lock:requirements3.txt",
 )
 
 load(
@@ -30,6 +30,32 @@ load(
 )
 
 _piptool_install_3()
+
+pip_import(
+    name = "piptool_deps_tests",
+    python_version = "2.7",
+    requirements = "//tests:requirements.txt",
+)
+
+load(
+    "@piptool_deps_tests//:requirements.bzl",
+    _piptool_install_tests = "pip_install",
+)
+
+_piptool_install_tests()
+
+pip_import(
+    name = "piptool_deps_tests_3",
+    python_version = "3.6",
+    requirements = "//tests:requirements3.txt",
+)
+
+load(
+    "@piptool_deps_tests_3//:requirements.bzl",
+    _piptool_install_tests_3 = "pip_install",
+)
+
+_piptool_install_tests_3()
 
 http_file(
     name = "grpc_whl",

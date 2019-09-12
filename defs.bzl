@@ -2,7 +2,6 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-_VIRTUAL_ENV = "VIRTUAL_ENV"
 _PYTHON_BIN_PATH = "PYTHON_BIN_PATH"
 
 def _get_python_bin(repository_ctx):
@@ -11,30 +10,20 @@ def _get_python_bin(repository_ctx):
     # if python bin is provided use that
     python_bin = repository_ctx.os.environ.get(_PYTHON_BIN_PATH)
     if python_bin != None:
-        return [python_bin]
+        return python_bin
 
-    # otw. if there is no venv just use the python in the shebang
-    venv = repository_ctx.os.environ.get(_VIRTUAL_ENV)
-    if venv == None:
-        return []
-
-    # if a venv exists just use "python"
-    python_bin_path = repository_ctx.which("python")
+    python_bin_path = repository_ctx.which("python" + repository_ctx.attr.python_version)
     if python_bin_path != None:
-        return [str(python_bin_path)]
-    fail("Cannot find python in PATH, please make sure " +
-         "python is installed and add its directory in PATH, or --define " +
-         "%s='/something/else'.\nPATH=%s" % (
-             _PYTHON_BIN_PATH,
-             repository_ctx.os.environ.get("PATH", ""),
-         ))
+        return str(python_bin_path)
+    fail("Cannot find python%s in PATH, please make sure it is installed" % repository_ctx.attr.python_version)
 
 def _pip_import_impl(repository_ctx):
     """Core implementation of pip_import."""
     repository_ctx.file("BUILD", "")
     repository_ctx.symlink(repository_ctx.attr.requirements, "requirements.txt")
 
-    result = repository_ctx.execute(_get_python_bin(repository_ctx) + [
+    result = repository_ctx.execute([
+        _get_python_bin(repository_ctx),
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
         repository_ctx.attr.name,
@@ -57,6 +46,7 @@ pip_import = repository_rule(
             doc = "requirement.txt file generatd by pip-compile",
         ),
         "python_version": attr.string(
+            mandatory = True,
             doc = "python-version for which fetch, install and find the " +
                   "dependencies of packages. It is passed to 'pip install'",
         ),
@@ -68,7 +58,6 @@ pip_import = repository_rule(
         ),
     },
     environ = [
-        _VIRTUAL_ENV,
         _PYTHON_BIN_PATH,
     ],
     implementation = _pip_import_impl,
@@ -77,7 +66,8 @@ pip_import = repository_rule(
 def _whl_impl(repository_ctx):
     """Core implementation of whl_library."""
 
-    args = _get_python_bin(repository_ctx) + [
+    args = [
+        _get_python_bin(repository_ctx),
         repository_ctx.path(repository_ctx.attr._script),
         "--requirements",
         repository_ctx.attr.requirements_repo,
@@ -118,7 +108,6 @@ whl_library = repository_rule(
         ),
     },
     environ = [
-        _VIRTUAL_ENV,
         _PYTHON_BIN_PATH,
     ],
     implementation = _whl_impl,
