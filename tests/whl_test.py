@@ -27,17 +27,23 @@ def TestData(name):
 
 class WheelTest(unittest.TestCase):
     def test_grpc_whl(self):
-        td = pkginfo.Wheel(TestData("grpc_whl/file/grpcio-1.6.0-cp27-cp27m-manylinux1_i686.whl"))
+        td = pkginfo.Wheel(
+            TestData("grpc_whl/file/grpcio-1.6.0-cp27-cp27m-manylinux1_i686.whl")
+        )
         self.assertEqual(
             set(whl.dependencies(td)), set(["enum34", "futures", "protobuf", "six"])
         )
 
     def test_futures_whl(self):
-        td = pkginfo.Wheel(TestData("futures_3_1_1_whl/file/futures-3.1.1-py2-none-any.whl"))
+        td = pkginfo.Wheel(
+            TestData("futures_3_1_1_whl/file/futures-3.1.1-py2-none-any.whl")
+        )
         self.assertEqual(set(whl.dependencies(td)), set())
 
     def test_whl_with_METADATA_file(self):
-        td = pkginfo.Wheel(TestData("futures_2_2_0_whl/file/futures-2.2.0-py2.py3-none-any.whl"))
+        td = pkginfo.Wheel(
+            TestData("futures_2_2_0_whl/file/futures-2.2.0-py2.py3-none-any.whl")
+        )
         self.assertEqual(set(whl.dependencies(td)), set())
 
     @patch("platform.python_version", return_value="2.7.13")
@@ -67,10 +73,12 @@ class WheelTest(unittest.TestCase):
 
     @patch("platform.python_version", return_value="2.7.13")
     def test_google_cloud_language_whl(self, *args):
-        td = pkginfo.Wheel(TestData(
-            "google_cloud_language_whl/file/"
-            + "google_cloud_language-0.29.0-py2.py3-none-any.whl"
-        ))
+        td = pkginfo.Wheel(
+            TestData(
+                "google_cloud_language_whl/file/"
+                + "google_cloud_language-0.29.0-py2.py3-none-any.whl"
+            )
+        )
         expected_deps = [
             "google-gax",
             "google-cloud-core",
@@ -81,10 +89,12 @@ class WheelTest(unittest.TestCase):
 
     @patch("platform.python_version", return_value="3.4.0")
     def test_google_cloud_language_whl_3_4(self, *args):
-        td = pkginfo.Wheel(TestData(
-            "google_cloud_language_whl/file/"
-            + "google_cloud_language-0.29.0-py2.py3-none-any.whl"
-        ))
+        td = pkginfo.Wheel(
+            TestData(
+                "google_cloud_language_whl/file/"
+                + "google_cloud_language-0.29.0-py2.py3-none-any.whl"
+            )
+        )
         expected_deps = [
             "google-gax",
             "google-cloud-core",

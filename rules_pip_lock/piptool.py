@@ -122,7 +122,8 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--python-version", help="The python version used to evaluate the dependencies for.",
+        "--python-version",
+        help="The python version used to evaluate the dependencies for.",
         required=True,
     )
     args = parser.parse_args()
@@ -169,8 +170,7 @@ def requirement(name):
     fail("Could not find pip-provided dependency: '%s'" % name)
   return _requirements[name_key]
 """.format(
-                whl_libraries="\n".join(whl_libraries),
-                mappings=",".join(whl_targets),
+                whl_libraries="\n".join(whl_libraries), mappings=",".join(whl_targets)
             )
         )
 

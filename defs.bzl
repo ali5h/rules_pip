@@ -2,7 +2,7 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-_PYTHON_BIN_PATH = "PYTHON_BIN_PATH"
+_PYTHON_BIN_PATH = "PIP_PYTHON_BIN_PATH"
 
 def _get_python_bin(repository_ctx):
     """Gets the python bin path."""

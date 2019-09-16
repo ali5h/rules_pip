@@ -10,7 +10,6 @@ from pip._internal.commands import InstallCommand
 from pip._vendor import pkg_resources
 
 
-
 def install_package(pkg, directory, python_version, pip_args):
     """Downloads wheel for a package. Assumes python binary provided has
     pip and wheel package installed.
@@ -27,7 +26,7 @@ def install_package(pkg, directory, python_version, pip_args):
         "--target",
         directory,
         "--no-deps",
-        "--upgrade",
+        "--ignore-requires-python",
         "--python-version",
         python_version,
         pkg,
@@ -41,12 +40,14 @@ def install_package(pkg, directory, python_version, pip_args):
     namespace_packages = os.path.join(dist_info, "namespace_packages.txt")
     if os.path.exists(namespace_packages):
         with open(namespace_packages) as nspkg:
-          for line in nspkg.readlines():
-              namespace = line.strip().replace(".", os.sep)
-              if namespace:
-                  nspkg_init = os.path.join(directory, namespace, "__init__.py")
-                  with open(nspkg_init, "w") as nspkg:
-                      nspkg.write("__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
+            for line in nspkg.readlines():
+                namespace = line.strip().replace(".", os.sep)
+                if namespace:
+                    nspkg_init = os.path.join(directory, namespace, "__init__.py")
+                    with open(nspkg_init, "w") as nspkg:
+                        nspkg.write(
+                            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)"
+                        )
 
     return pkginfo.Wheel(dist_info)
 
@@ -181,9 +182,7 @@ py_library(
 )
 {extras}""".format(
         requirements=args.requirements,
-        dependencies=",".join(
-            ['requirement("%s")' % d for d in dependencies(pkg)]
-        ),
+        dependencies=",".join(['requirement("%s")' % d for d in dependencies(pkg)]),
         extras=extras,
     )
 
