@@ -13,10 +13,14 @@ py_library(
             "@bazel_tools//tools/python:PY2": [
                 requirement("pip"),
                 requirement("pkginfo"),
+                requirement("setuptools"),
+                requirement("wheel"),
             ],
             "@bazel_tools//tools/python:PY3": [
                 requirement_3("pip"),
                 requirement_3("pkginfo"),
+                requirement_3("setuptools"),
+                requirement_3("wheel"),
             ],
         },
     ),

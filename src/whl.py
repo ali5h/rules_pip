@@ -6,6 +6,8 @@ import shutil
 
 import pkginfo
 import platform
+import setuptools
+import wheel
 from pip._internal.commands import InstallCommand
 from pip._vendor import pkg_resources
 
