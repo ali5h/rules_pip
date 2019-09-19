@@ -17,7 +17,7 @@ py_test(
     main = "whl_test.py",
     python_version = "PY2",
     deps = [
-        "//rules_pip_lock:whllib",
+        "//src:whllib",
         requirement("mock"),
     ],
 )
@@ -35,7 +35,7 @@ py_test(
     main = "whl_test.py",
     python_version = "PY3",
     deps = [
-        "//rules_pip_lock:whllib",
+        "//src:whllib",
         requirement_3("mock"),
         # not need, just here for testing it can be installed
         requirement_3("pytest"),

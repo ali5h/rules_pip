@@ -8,7 +8,7 @@ repositories()
 pip_import(
     name = "piptool_deps",
     python_version = "2.7",
-    requirements = "//rules_pip_lock:requirements.txt",
+    requirements = "//src:requirements.txt",
 )
 
 load(
@@ -21,7 +21,7 @@ _piptool_install()
 pip_import(
     name = "piptool_deps_3",
     python_version = "3.6",
-    requirements = "//rules_pip_lock:requirements3.txt",
+    requirements = "//src:requirements3.txt",
 )
 
 load(

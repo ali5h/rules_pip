@@ -18,7 +18,7 @@ import unittest
 from mock import patch
 import pkginfo
 
-from rules_pip_lock import whl
+from src import whl
 
 
 def TestData(name):
