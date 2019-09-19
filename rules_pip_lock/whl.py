@@ -23,6 +23,8 @@ def install_package(pkg, directory, python_version, pip_args):
 
     """
     pip_args = [
+        "--isolated",
+        "--disable-pip-version-check",
         "--target",
         directory,
         "--no-deps",
