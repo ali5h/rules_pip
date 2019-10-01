@@ -50,5 +50,8 @@ par_binary(
     python_version = "PY2",
     deps = [
         requirement("pip-tools"),
+        requirement("pip"),
+        requirement("setuptools"),
+        requirement("wheel"),
     ],
 )
