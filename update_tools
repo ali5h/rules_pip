@@ -14,8 +14,8 @@ if [ "$#" -eq 0 ] ; then
 
     python3 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/src/requirements3.txt" "${DIR}/src/requirements.in"
     python3 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/tests/requirements3.txt" "${DIR}/tests/requirements.in"
-    bazel test //... --test_output=errors
-    bazel build //src/...
+    bazelisk test //... --test_output=errors
+    bazelisk build //src/...
     install $(bazel info bazel-bin)/src/*.par tools/
 else
   usage
