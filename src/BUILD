@@ -33,6 +33,7 @@ par_binary(
     deps = [
         ":whllib",
     ],
+    zip_safe = True,
 )
 
 par_binary(
