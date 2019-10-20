@@ -113,6 +113,32 @@ whl_library = repository_rule(
     implementation = _whl_impl,
 )
 
+def py_pytest_test(name, **kwargs):
+    """A macro that runs pytest tests by using a test runner
+    :param name: rule name
+    :param kwargs: are passed to py_test, with srcs and deps attrs modified
+    """
+
+    if "main" in kwargs:
+        fail("if you need to specify main, use py_test directly")
+
+    deps = kwargs.pop("deps", []) + ["@com_github_alish_rules_pip_lock//src:pytest_helper"]
+    srcs = kwargs.pop("srcs", []) + ["@com_github_alish_rules_pip_lock//src:pytest_helper"]
+
+    # failsafe, pytest won't work otw.
+    for src in srcs:
+        if name == src.split("/", maxsplit = 1)[0]:
+            fail("rule name (%s) cannot be the same as the" +
+                 "directory of the tests (%s)" % (name, src))
+
+    native.py_test(
+        name = name,
+        srcs = srcs,
+        main = "pytest_helper.py",
+        deps = deps,
+        **kwargs
+    )
+
 def repositories():
     if "rules_python" not in native.existing_rules():
         http_archive(

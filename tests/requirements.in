@@ -2,4 +2,4 @@ mock
 google-cloud-language
 testing.postgresql
 testing.mysqld
-pytest==3.10.1
+pytest
