@@ -7,16 +7,22 @@ These rules fetches pip packages using requirements file generated with `pip-com
 This repository provides support for installing dependencies typically
 managed via `pip`. Usage is similar to `rules_python`. Main difference
 is that `requirement.txt` must have been produced by
-`pip-compile`. This means that dependecies of all the pip packages are
-already resolved and bazel can fetch them in parallel.
+`pip-compile`. This means that dependencies of all the pip packages are
+already resolved and Bazel can fetch them in parallel.
 
-There is also support for python version. The assumption is each
-python version has its own requirement files. python binary of that version should exist in the global environe
+There is also support for python version. The assumption is that each
+python version has its own requirement files and the python binary of
+that version exists in the global environment.
 
 
 ## Setup
 
-Add the following to your `WORKSPACE` file:
+- Generate a `requirement.txt` with `pip-compile`
+```
+$ pip-compile -r requirements.txt
+```
+
+- Add the following to your `WORKSPACE` file:
 
 ```python
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "http_archive")
@@ -41,6 +47,8 @@ pip_import(
 load("@my_deps//:requirements.bzl", "pip_install")
 pip_install(["--only-binary", ":all"])
 ```
+
+You can optionally pass the same arguments that `pip install` accepts to `pip_install`. For example, if you have wheels for all the packages in the provided `requirements.txt` (do this so your builds are reproducible and tests can be cached) you can have `pip_install(["--only-binary", ":all"])`.
 
 ## Updating `tools/`
 
