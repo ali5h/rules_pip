@@ -56,15 +56,7 @@ par_binary(
     ],
 )
 
-load("@piptool_deps_tests//:requirements.bzl", requirement_test = "requirement")
-load("@piptool_deps_tests_3//:requirements.bzl", requirement_test_3 = "requirement")
-
 py_library(
     name = "pytest_helper",
     srcs = ["pytest_helper.py"],
-    # these deps will be added to deps of all the tests.
-    deps = select({
-        "@bazel_tools//tools/python:PY2": [requirement_test("pytest")],
-        "@bazel_tools//tools/python:PY3": [requirement_test_3("pytest")],
-    }),
 )

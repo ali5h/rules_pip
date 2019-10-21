@@ -43,11 +43,13 @@ py_test(
     ],
 )
 
+# run the test using pytest
 py_pytest_test(
     name = "test_namespace",
     srcs = ["test_namespace.py"],
     python_version = "PY2",
     deps = [
+        requirement("pytest"),
         requirement("google-cloud-language"),
         requirement("testing.postgresql"),
         requirement("testing.mysqld"),
