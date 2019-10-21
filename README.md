@@ -17,10 +17,7 @@ that version exists in the global environment.
 
 ## Setup
 
-- Generate a `requirement.txt` with `pip-compile`
-```
-$ pip-compile -r requirements.txt
-```
+- Generate a `requirement.txt` with [pip-compile](https://github.com/jazzband/pip-tools)
 
 - Add the following to your `WORKSPACE` file:
 
