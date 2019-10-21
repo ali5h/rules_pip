@@ -127,7 +127,7 @@ def py_pytest_test(name, **kwargs):
 
     # failsafe, pytest won't work otw.
     for src in srcs:
-        if name == src.split("/", maxsplit = 1)[0]:
+        if name == src.split("/", 1)[0]:
             fail("rule name (%s) cannot be the same as the" +
                  "directory of the tests (%s)" % (name, src))
 
