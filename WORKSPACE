@@ -1,4 +1,4 @@
-workspace(name = "com_github_alish_rules_pip_lock")
+workspace(name = "com_github_alish_rules_pip")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("//:defs.bzl", "pip_import", "repositories")

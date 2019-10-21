@@ -28,13 +28,13 @@ $ pip-compile -r requirements.txt
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "http_archive")
 
 http_archive(
-    name = "com_github_alish_rules_pip_lock",
-    strip_prefix = "rules_pip_lock-0.2.0",
-    urls = ["https://github.com/ali5h/rules_pip_lock/archive/v0.2.0.tar.gz"],
+    name = "com_github_alish_rules_pip",
+    strip_prefix = "rules_pip-0.3.0",
+    urls = ["https://github.com/ali5h/rules_pip/archive/v0.3.0.tar.gz"],
 )
 
 
-load("@com_github_alish_rules_pip_lock//python:pip.bzl", "pip_import", "repositories")
+load("@com_github_alish_rules_pip//python:pip0C.bzl", "pip_import", "repositories")
 
 repositories()
 
