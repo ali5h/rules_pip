@@ -27,7 +27,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "http_archive")
 http_archive(
     name = "com_github_ali5h_rules_pip",
     strip_prefix = "rules_pip-0.4.0",
-    urls = ["https://github.com/ali5h/rules_pip/archive/v0.4.0.tar.gz"],
+    urls = ["https://github.com/ali5h/rules_pip/archive/0.4.0.tar.gz"],
 )
 
 
