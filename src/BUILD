@@ -38,6 +38,7 @@ par_binary(
     deps = [
         ":whllib",
     ],
+    zip_safe = False,
 )
 
 par_binary(
@@ -60,6 +61,7 @@ par_binary(
         requirement("setuptools"),
         requirement("wheel"),
     ],
+    zip_safe = False,
 )
 
 py_library(

@@ -3,3 +3,4 @@ def test_import():
     import google.cloud.language
     import testing.postgresql
     import testing.mysqld
+    import tensorflow as tf

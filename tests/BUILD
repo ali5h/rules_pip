@@ -53,5 +53,6 @@ py_pytest_test(
         requirement("google-cloud-language"),
         requirement("testing.postgresql"),
         requirement("testing.mysqld"),
+        requirement("tensorflow"),
     ],
 )

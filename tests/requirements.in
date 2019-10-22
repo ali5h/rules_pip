@@ -3,3 +3,4 @@ google-cloud-language
 testing.postgresql
 testing.mysqld
 pytest
+tensorflow
