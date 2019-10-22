@@ -155,7 +155,7 @@ def main():
             """\
 # Install pip requirements.
 
-load("@com_github_alish_rules_pip//:defs.bzl", "whl_library")
+load("@com_github_ali5h_rules_pip//:defs.bzl", "whl_library")
 
 def pip_install(pip_args=[]):
   {whl_libraries}

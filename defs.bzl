@@ -122,8 +122,8 @@ def py_pytest_test(name, **kwargs):
     if "main" in kwargs:
         fail("if you need to specify main, use py_test directly")
 
-    deps = kwargs.pop("deps", []) + ["@com_github_alish_rules_pip//src:pytest_helper"]
-    srcs = kwargs.pop("srcs", []) + ["@com_github_alish_rules_pip//src:pytest_helper"]
+    deps = kwargs.pop("deps", []) + ["@com_github_ali5h_rules_pip//src:pytest_helper"]
+    srcs = kwargs.pop("srcs", []) + ["@com_github_ali5h_rules_pip//src:pytest_helper"]
 
     # failsafe, pytest won't work otw.
     for src in srcs:
