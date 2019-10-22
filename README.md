@@ -31,7 +31,7 @@ http_archive(
 )
 
 
-load("@com_github_alish_rules_pip//python:pip0C.bzl", "pip_import", "repositories")
+load("@com_github_alish_rules_pip//:defs.bzl", "pip_import", "repositories")
 
 repositories()
 
