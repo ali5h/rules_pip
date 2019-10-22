@@ -3,22 +3,13 @@ import argparse
 import glob
 import os
 import shutil
-import sys
 
 import pkginfo
 import platform
 from pip._internal.commands import InstallCommand
 from pip._vendor import pkg_resources
 
-
-def update_python_path(packages):
-    to_add = [
-        path for path in sys.path for package in packages if package in path
-    ]
-    existing_pythonpath = os.environ.get('PYTHONPATH')
-    if existing_pythonpath:
-        to_add.extend(existing_pythonpath.split(':'))
-    os.environ['PYTHONPATH'] = ':'.join(to_add)
+from src.common import update_python_path
 
 
 def install_package(pkg, directory, python_version, pip_args):

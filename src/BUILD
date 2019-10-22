@@ -6,9 +6,14 @@ load("@piptool_deps_3//:requirements.bzl", requirement_3 = "requirement")
 load("@subpar//:subpar.bzl", "par_binary")
 
 py_library(
+    name = "common",
+    srcs = ["common.py"],
+)
+
+py_library(
     name = "whllib",
     srcs = ["whl.py"],
-    deps = select(
+    deps = [":common"] + select(
         {
             "@bazel_tools//tools/python:PY2": [
                 requirement("pip"),
@@ -49,6 +54,7 @@ par_binary(
     srcs = ["compile.py"],
     python_version = "PY2",
     deps = [
+        ":common",
         requirement("pip-tools"),
         requirement("pip"),
         requirement("setuptools"),
