@@ -42,7 +42,7 @@ pip_import(
 )
 
 load("@my_deps//:requirements.bzl", "pip_install")
-pip_install(["--only-binary", ":all"])
+pip_install()
 ```
 
 You can optionally pass the same arguments that `pip install` accepts to `pip_install`. For example, if you have wheels for all the packages in the provided `requirements.txt` (do this so your builds are reproducible and tests can be cached) you can have `pip_install(["--only-binary", ":all"])`.
