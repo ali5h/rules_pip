@@ -3,6 +3,7 @@ import argparse
 import glob
 import os
 import shutil
+import sys
 
 import pkginfo
 import platform
@@ -94,6 +95,27 @@ def _cleanup(directory, pattern):
         shutil.rmtree(p)
 
 
+def _get_numpy_headers(directory):
+    """Generate cc_library rule for numpy headers.
+
+    :param directory: path to numpy package installation root
+    :returns: a cc_library rule
+    :rtype: str
+
+    """
+    sys.path.insert(0, directory)
+    import numpy
+    include_dir = os.path.relpath(numpy.get_include(), directory)
+    sys.path.pop(0)
+    return """
+cc_library(
+    name = "headers",
+    hdrs = glob(["{include_dir}/**/*.h"]),
+    includes = ["{include_dir}"],
+)
+""".format(include_dir=include_dir)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Create py_library rule for a WHL file."
@@ -142,8 +164,7 @@ def main():
     pip_args = args.pip_args + ["-c", args.constraint]
     pkg = install_package(args.package, args.directory, args.python_version, pip_args)
 
-    extras = "\n".join(
-        [
+    extras_list = [
             """
 py_library(
     name = "{extra}",
@@ -157,8 +178,13 @@ py_library(
                 ),
             )
             for extra in args.extras or []
-        ]
-    )
+    ]
+
+    # we treat numpy in a special way, inject a rule for numpy headers
+    if args.package == "numpy":
+        extras_list.append(_get_numpy_headers(args.directory))
+
+    extras = "\n".join(extras_list)
 
     result = """
 package(default_visibility = ["//visibility:public"])
