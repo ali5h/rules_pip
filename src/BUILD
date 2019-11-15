@@ -35,10 +35,10 @@ par_binary(
     name = "whl",
     srcs = ["whl.py"],
     python_version = "PY2",
+    zip_safe = False,
     deps = [
         ":whllib",
     ],
-    zip_safe = False,
 )
 
 par_binary(
@@ -54,6 +54,7 @@ par_binary(
     name = "compile",
     srcs = ["compile.py"],
     python_version = "PY2",
+    zip_safe = False,
     deps = [
         ":common",
         requirement("pip-tools"),
@@ -61,7 +62,6 @@ par_binary(
         requirement("setuptools"),
         requirement("wheel"),
     ],
-    zip_safe = False,
 )
 
 py_library(
