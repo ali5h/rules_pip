@@ -4,3 +4,5 @@ def test_import():
     import testing.postgresql
     import testing.mysqld
     import tensorflow as tf
+    import azure.common
+    import azure.storage.blob

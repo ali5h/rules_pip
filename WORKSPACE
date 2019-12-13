@@ -20,7 +20,7 @@ _piptool_install()
 
 pip_import(
     name = "piptool_deps_3",
-    python_version = "3.6",
+    python_version = "3.7",
     requirements = "//src:requirements3.txt",
 )
 
@@ -46,7 +46,7 @@ _piptool_install_tests()
 
 pip_import(
     name = "piptool_deps_tests_3",
-    python_version = "3.6",
+    python_version = "3.7",
     requirements = "//tests:requirements3.txt",
 )
 

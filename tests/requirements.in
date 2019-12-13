@@ -4,3 +4,5 @@ testing.postgresql
 testing.mysqld
 pytest
 tensorflow
+azure-common
+azure-storage-blob

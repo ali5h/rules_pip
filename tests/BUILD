@@ -54,5 +54,7 @@ py_pytest_test(
         requirement("testing.postgresql"),
         requirement("testing.mysqld"),
         requirement("tensorflow"),
+        requirement("azure-common"),
+        requirement("azure-storage-blob"),
     ],
 )
