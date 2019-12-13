@@ -41,6 +41,13 @@ def configure_reproducible_wheels():
         os.environ["PYTHONHASHSEED"] = "0"
 
 
+def _create_nspkg_init(dirpath):
+    """Creates an init file to enable namespacing"""
+    nspkg_init = os.path.join(dirpath, "__init__.py")
+    with open(nspkg_init, "w") as nspkg:
+        nspkg.write("__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
+
+
 def install_package(pkg, directory, python_version, pip_args):
     """Downloads wheel for a package. Assumes python binary provided has
     pip and wheel package installed.
@@ -74,11 +81,20 @@ def install_package(pkg, directory, python_version, pip_args):
             for line in nspkg.readlines():
                 namespace = line.strip().replace(".", os.sep)
                 if namespace:
-                    nspkg_init = os.path.join(directory, namespace, "__init__.py")
-                    with open(nspkg_init, "w") as nspkg:
-                        nspkg.write(
-                            "__path__ = __import__('pkgutil').extend_path(__path__, __name__)"
-                        )
+                    _create_nspkg_init(os.path.join(directory, namespace))
+
+    # PEP 420 -- Implicit Namespace Packages
+    if (sys.version_info[0], sys.version_info[1]) >= (3, 3):
+        for dirpath, dirnames, filenames in os.walk(directory):
+            # we are only interested in dirs with no init file
+            if "__init__.py" in filenames:
+                dirnames[:] = []
+                continue
+            # remove bin and dist-info dirs
+            for ignored in ("bin", os.path.basename(dist_info)):
+                if ignored in dirnames:
+                    dirnames.remove(ignored)
+            _create_nspkg_init(dirpath)
 
     return pkginfo.Wheel(dist_info)
 

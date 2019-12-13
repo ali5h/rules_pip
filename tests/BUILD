@@ -47,14 +47,14 @@ py_test(
 py_pytest_test(
     name = "test_namespace",
     srcs = ["test_namespace.py"],
-    python_version = "PY2",
+    python_version = "PY3",
     deps = [
-        requirement("pytest"),
-        requirement("google-cloud-language"),
-        requirement("testing.postgresql"),
-        requirement("testing.mysqld"),
-        requirement("tensorflow"),
-        requirement("azure-common"),
-        requirement("azure-storage-blob"),
+        requirement_3("pytest"),
+        requirement_3("google-cloud-language"),
+        requirement_3("testing.postgresql"),
+        requirement_3("testing.mysqld"),
+        requirement_3("tensorflow"),
+        requirement_3("azure-common"),
+        requirement_3("azure-storage-blob"),
     ],
 )
