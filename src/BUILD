@@ -2,7 +2,6 @@ package(default_visibility = ["//visibility:public"])
 
 load("@rules_python//python:defs.bzl", "py_binary")
 load("@piptool_deps//:requirements.bzl", "requirement")
-load("@piptool_deps_3//:requirements.bzl", requirement_3 = "requirement")
 load("@subpar//:subpar.bzl", "par_binary")
 
 py_library(
@@ -13,22 +12,13 @@ py_library(
 py_library(
     name = "whllib",
     srcs = ["whl.py"],
-    deps = [":common"] + select(
-        {
-            "@bazel_tools//tools/python:PY2": [
-                requirement("pip"),
-                requirement("pkginfo"),
-                requirement("setuptools"),
-                requirement("wheel"),
-            ],
-            "@bazel_tools//tools/python:PY3": [
-                requirement_3("pip"),
-                requirement_3("pkginfo"),
-                requirement_3("setuptools"),
-                requirement_3("wheel"),
-            ],
-        },
-    ),
+    deps = [
+        ":common",
+        requirement("pip"),
+        requirement("pkginfo"),
+        requirement("setuptools"),
+        requirement("wheel"),
+    ],
 )
 
 par_binary(

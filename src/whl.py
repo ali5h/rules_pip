@@ -1,6 +1,7 @@
 """downloads and parses info of a pkg and generates a BUILD file for it"""
 import argparse
 import glob
+import logging
 import os
 import shutil
 import sys
@@ -11,6 +12,33 @@ from pip._internal.commands import InstallCommand
 from pip._vendor import pkg_resources
 
 from src.common import update_python_path
+
+# https://github.com/dillon-giacoppo/rules_python_external/blob/master/tools/wheel_wrapper.py
+def configure_reproducible_wheels():
+    """
+    Wheels created from sdists are not reproducible by default. We can
+    however workaround this by patching in some configuration with
+    environment variables.
+    """
+
+    # wheel, by default, enables debug symbols in GCC. This incidentally
+    # captures the build path in the .so file We can override this
+    # behavior by disabling debug symbols entirely.
+    # https://github.com/pypa/pip/issues/6505
+    if os.environ.get("CFLAGS") is not None:
+        os.environ["CFLAGS"] += " -g0"
+    else:
+        os.environ["CFLAGS"] = "-g0"
+
+    # set SOURCE_DATE_EPOCH to 1980 so that we can use python wheels
+    # https://github.com/NixOS/nixpkgs/blob/master/doc/languages-frameworks/python.section.md#python-setuppy-bdist_wheel-cannot-create-whl
+    if os.environ.get("SOURCE_DATE_EPOCH") is None:
+        os.environ["SOURCE_DATE_EPOCH"] = "315532800"
+
+    # Python wheel metadata files can be unstable.
+    # https://bitbucket.org/pypa/wheel/pull-requests/74/make-the-output-of-metadata-files/diff
+    if os.environ.get("PYTHONHASHSEED") is None:
+        os.environ["PYTHONHASHSEED"] = "0"
 
 
 def install_package(pkg, directory, python_version, pip_args):
@@ -105,6 +133,7 @@ def _get_numpy_headers(directory):
     """
     sys.path.insert(0, directory)
     import numpy
+
     include_dir = os.path.relpath(numpy.get_include(), directory)
     sys.path.pop(0)
     return """
@@ -113,10 +142,13 @@ cc_library(
     hdrs = glob(["{include_dir}/**/*.h"]),
     includes = ["{include_dir}"],
 )
-""".format(include_dir=include_dir)
+""".format(
+        include_dir=include_dir
+    )
 
 
 def main():
+    logging.basicConfig()
     parser = argparse.ArgumentParser(
         description="Create py_library rule for a WHL file."
     )
@@ -163,21 +195,18 @@ def main():
 
     pip_args = args.pip_args + ["-c", args.constraint]
     pkg = install_package(args.package, args.directory, args.python_version, pip_args)
-
     extras_list = [
-            """
+        """
 py_library(
     name = "{extra}",
     deps = [
         ":pkg",{deps}
     ],
 )""".format(
-                extra=extra,
-                deps=",".join(
-                    ['requirement("%s")' % d for d in dependencies(pkg, extra)]
-                ),
-            )
-            for extra in args.extras or []
+            extra=extra,
+            deps=",".join(['requirement("%s")' % d for d in dependencies(pkg, extra)]),
+        )
+        for extra in args.extras or []
     ]
 
     # we treat numpy in a special way, inject a rule for numpy headers

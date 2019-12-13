@@ -19,19 +19,6 @@ load(
 _piptool_install()
 
 pip_import(
-    name = "piptool_deps_3",
-    python_version = "3.7",
-    requirements = "//src:requirements3.txt",
-)
-
-load(
-    "@piptool_deps_3//:requirements.bzl",
-    _piptool_install_3 = "pip_install",
-)
-
-_piptool_install_3()
-
-pip_import(
     name = "piptool_deps_tests",
     python_version = "2.7",
     requirements = "//tests:requirements.txt",
