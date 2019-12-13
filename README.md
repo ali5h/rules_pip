@@ -26,8 +26,9 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "http_archive")
 
 http_archive(
     name = "com_github_ali5h_rules_pip",
-    strip_prefix = "rules_pip-0.5.0",
-    urls = ["https://github.com/ali5h/rules_pip/archive/0.5.0.tar.gz"],
+    strip_prefix = "rules_pip-1.0.0",
+    sha256 = "922ff01011fdfb431b5e478ca3d4a18b193728eb41f9df018d7c9c89c41d7f1d",
+    urls = ["https://github.com/ali5h/rules_pip/archive/v1.0.0.tar.gz"],
 )
 
 
@@ -38,7 +39,7 @@ repositories()
 pip_import(
    name = "my_deps",
    requirements = "//path/to:requirements.txt",
-   python_version="3.6",
+   python_version="3",
 )
 
 load("@my_deps//:requirements.bzl", "pip_install")
