@@ -1,8 +1,7 @@
-package(default_visibility = ["//visibility:public"])
-
-load("@rules_python//python:defs.bzl", "py_binary")
 load("@piptool_deps//:requirements.bzl", "requirement")
 load("@subpar//:subpar.bzl", "par_binary")
+
+package(default_visibility = ["//visibility:public"])
 
 py_library(
     name = "common",
