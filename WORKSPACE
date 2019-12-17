@@ -5,9 +5,16 @@ load("//:defs.bzl", "pip_import", "repositories")
 
 repositories()
 
+http_archive(
+    name = "subpar",
+    sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
+    strip_prefix = "subpar-2.0.0",
+    urls = ["https://github.com/google/subpar/archive/2.0.0.tar.gz"],
+)
+
 pip_import(
     name = "piptool_deps",
-    python_version = "2.7",
+    python_interpreter = "python2.7",
     requirements = "//src:requirements.txt",
 )
 
@@ -20,7 +27,7 @@ _piptool_install()
 
 pip_import(
     name = "piptool_deps_tests",
-    python_version = "2.7",
+    python_interpreter = "python2.7",
     requirements = "//tests:requirements.txt",
 )
 
@@ -33,7 +40,7 @@ _piptool_install_tests()
 
 pip_import(
     name = "piptool_deps_tests_3",
-    python_version = "3",
+    python_interpreter = "python3",
     requirements = "//tests:requirements3.txt",
 )
 

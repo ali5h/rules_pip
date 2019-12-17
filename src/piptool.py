@@ -1,5 +1,6 @@
 import argparse
 import re
+import sys
 
 from pip._internal.req.req_file import parse_requirements
 from pip._internal.download import PipSession
@@ -62,7 +63,7 @@ def repository_name(name, version, python_version):
     return clean_name(canonical)
 
 
-def whl_library(name, extras, repo_name, pip_repo_name, python_version):
+def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter):
     """FIXME! briefly describe function
 
     :param name: package nane
@@ -80,14 +81,14 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_version):
         name = "{repo_name}",
         pkg = "{name}",
         requirements_repo = "@{pip_repo_name}",
-        python_version = "{python_version}",
+        python_interpreter = "{python_interpreter}",
         extras = [{extras}],
         pip_args = pip_args,
     )""".format(
         name=name,
         repo_name=repo_name,
         pip_repo_name=pip_repo_name,
-        python_version=python_version,
+        python_interpreter=python_interpreter,
         extras=",".join(['"%s"' % extra for extra in extras]),
     )
 
@@ -121,20 +122,15 @@ def main():
         help=("The requirements.bzl file to export."),
         required=True,
     )
-    parser.add_argument(
-        "--python-version",
-        help="The python version used to evaluate the dependencies for.",
-        required=True,
-    )
     args = parser.parse_args()
 
     reqs = get_requirements(args.input)
-
+    python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = []
     whl_libraries = []
     for req in reqs:
         name, version, extras = as_tuple(req)
-        repo_name = repository_name(name, version, args.python_version)
+        repo_name = repository_name(name, version, python_version)
         whl_targets.append(
             ",".join(
                 ['"%s": "@%s//:pkg"' % (name.lower(), repo_name)]
@@ -147,7 +143,7 @@ def main():
             )
         )
         whl_libraries.append(
-            whl_library(name, extras, repo_name, args.name, args.python_version)
+            whl_library(name, extras, repo_name, args.name, sys.executable)
         )
 
     with open(args.output, "w") as _f:
