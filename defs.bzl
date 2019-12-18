@@ -1,5 +1,13 @@
 """Import pip requirements into Bazel."""
 
+pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/easy_install.py")
+
+def _execute(repository_ctx, arguments):
+    pip_vendor = str(repository_ctx.path(repository_ctx.attr._vendor).dirname)
+    return repository_ctx.execute(arguments, environment = {
+        "PYTHONPATH": pip_vendor,
+    })
+
 def _pip_import_impl(repository_ctx):
     """Core implementation of pip_import."""
     repository_ctx.file("BUILD", "")
@@ -8,7 +16,7 @@ def _pip_import_impl(repository_ctx):
 
     # make a copy for compile
     repository_ctx.file("requirements.txt", content = reqs, executable = False)
-    result = repository_ctx.execute([
+    result = _execute(repository_ctx, [
         repository_ctx.attr.python_interpreter,
         repository_ctx.path(repository_ctx.attr._compiler),
         "--allow-unsafe",
@@ -24,7 +32,7 @@ def _pip_import_impl(repository_ctx):
     if result.return_code:
         fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
 
-    result = repository_ctx.execute([
+    result = _execute(repository_ctx, [
         repository_ctx.attr.python_interpreter,
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
@@ -53,13 +61,19 @@ wheels.
         ),
         "_script": attr.label(
             executable = True,
-            default = Label("//tools:piptool.par"),
+            default = Label("@com_github_ali5h_rules_pip//src:piptool.py"),
             allow_single_file = True,
             cfg = "host",
         ),
         "_compiler": attr.label(
             executable = True,
-            default = Label("//tools:compile.par"),
+            default = Label("@com_github_ali5h_rules_pip//src:compile.py"),
+            allow_single_file = True,
+            cfg = "host",
+        ),
+        "_vendor": attr.label(
+            executable = True,
+            default = pip_vendor_label,
             allow_single_file = True,
             cfg = "host",
         ),
@@ -92,7 +106,7 @@ def _whl_impl(repository_ctx):
             for extra in repository_ctx.attr.extras
         ]
 
-    result = repository_ctx.execute(args)
+    result = _execute(repository_ctx, args)
     if result.return_code:
         fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
 
@@ -108,12 +122,13 @@ wheels.
         "pip_args": attr.string_list(default = []),
         "_script": attr.label(
             executable = True,
-            default = Label("//tools:whl.par"),
+            default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
             cfg = "host",
         ),
-        "_compile": attr.label(
+        "_vendor": attr.label(
             executable = True,
-            default = Label("//tools:compile.par"),
+            default = pip_vendor_label,
+            allow_single_file = True,
             cfg = "host",
         ),
     },

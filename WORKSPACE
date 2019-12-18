@@ -3,13 +3,6 @@ workspace(name = "com_github_ali5h_rules_pip")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("//:defs.bzl", "pip_import")
 
-http_archive(
-    name = "subpar",
-    sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
-    strip_prefix = "subpar-2.0.0",
-    urls = ["https://github.com/google/subpar/archive/2.0.0.tar.gz"],
-)
-
 pip_import(
     name = "piptool_deps",
     python_interpreter = "python2.7",
@@ -24,22 +17,9 @@ load(
 _piptool_install()
 
 pip_import(
-    name = "piptool_deps_tests",
-    python_interpreter = "python2.7",
-    requirements = "//tests:requirements.txt",
-)
-
-load(
-    "@piptool_deps_tests//:requirements.bzl",
-    _piptool_install_tests = "pip_install",
-)
-
-_piptool_install_tests()
-
-pip_import(
     name = "piptool_deps_tests_3",
     python_interpreter = "python3",
-    requirements = "//tests:requirements3.txt",
+    requirements = "//tests:requirements.txt",
 )
 
 load(
