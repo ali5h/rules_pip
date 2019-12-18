@@ -7,16 +7,34 @@ usage() {
 
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export CUSTOM_COMPILE_COMMAND="$(basename "$0")"
+export PYTHONPATH="${DIR}/third_party/py"
 
 if [ "$#" -eq 0 ] ; then
-    python2 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/src/requirements.txt" "${DIR}/src/requirements.in"
-    python2 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/tests/requirements.txt" "${DIR}/tests/requirements.in"
+    python "${DIR}/src/compile.py" \
+           --allow-unsafe \
+           --generate-hashes \
+           --no-emit-trusted-host \
+           --no-annotate \
+           --no-emit-find-links \
+           --no-header \
+           --no-index \
+           --output-file="${DIR}/src/requirements.txt" \
+           "${DIR}/src/requirements.in"
 
-    python3 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/src/requirements3.txt" "${DIR}/src/requirements.in"
-    python3 "${DIR}/tools/compile.par" --allow-unsafe --output-file="${DIR}/tests/requirements3.txt" "${DIR}/tests/requirements.in"
+    rm -rf "${PYTHONPATH}"
+    pip install -t "${PYTHONPATH}" -r "${DIR}/src/requirements.txt" --no-deps
+
+    python3 "${DIR}/src/compile.py" \
+            --allow-unsafe \
+           --no-emit-trusted-host \
+           --no-annotate \
+           --no-emit-find-links \
+           --no-header \
+           --no-index \
+           --output-file="${DIR}/tests/requirements.txt" \
+           "${DIR}/tests/requirements.in"
+
     bazel test //... --test_output=errors
-    bazel build //src/...
-    install $(bazel info bazel-bin)/src/*.par tools/
 else
   usage
 fi

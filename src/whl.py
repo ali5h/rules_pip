@@ -7,11 +7,8 @@ import shutil
 import sys
 
 import pkginfo
-import platform
 from pip._internal.commands import InstallCommand
 from pip._vendor import pkg_resources
-
-from src.common import update_python_path
 
 # https://github.com/dillon-giacoppo/rules_python_external/blob/master/tools/wheel_wrapper.py
 def configure_reproducible_wheels():
@@ -261,5 +258,4 @@ py_library(
 
 
 if __name__ == "__main__":
-    update_python_path(["setuptools", "wheel"])
     main()

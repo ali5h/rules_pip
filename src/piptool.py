@@ -1,4 +1,5 @@
 import argparse
+import logging
 import re
 import sys
 
@@ -106,6 +107,7 @@ def get_requirements(requirement):
 
 
 def main():
+    logging.basicConfig()
     parser = argparse.ArgumentParser(
         description="Import Python dependencies into Bazel."
     )

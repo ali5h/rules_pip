@@ -1,29 +1,10 @@
 """tests"""
 
 load("//:defs.bzl", "py_pytest_test")
-load("@piptool_deps_tests//:requirements.bzl", requirement_2 = "requirement")
 load("@piptool_deps_tests_3//:requirements.bzl", "requirement")
 
 py_test(
-    name = "whl_test2",
-    srcs = ["test_whl.py"],
-    data = [
-        "@futures_2_2_0_whl//file",
-        "@futures_3_1_1_whl//file",
-        "@google_cloud_language_whl//file",
-        "@grpc_whl//file",
-        "@mock_whl//file",
-    ],
-    main = "test_whl.py",
-    python_version = "PY2",
-    deps = [
-        "//src:whllib",
-        requirement_2("mock"),
-    ],
-)
-
-py_test(
-    name = "whl_test3",
+    name = "whl_test",
     srcs = ["test_whl.py"],
     data = [
         "@futures_2_2_0_whl//file",
