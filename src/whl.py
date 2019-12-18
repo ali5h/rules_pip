@@ -48,7 +48,7 @@ def _create_nspkg_init(dirpath):
         nspkg.write("__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
 
 
-def install_package(pkg, directory, python_version, pip_args):
+def install_package(pkg, directory, pip_args):
     """Downloads wheel for a package. Assumes python binary provided has
     pip and wheel package installed.
 
@@ -197,16 +197,12 @@ def main():
         action="append",
         help="The set of extras for which to generate library targets.",
     )
-    parser.add_argument(
-        "--python-version",
-        help="The python version to evaluate the dependencies for (unused)",
-    )
 
     args = parser.parse_args()
 
     pip_args = args.pip_args + ["-c", args.constraint]
     configure_reproducible_wheels()
-    pkg = install_package(args.package, args.directory, args.python_version, pip_args)
+    pkg = install_package(args.package, args.directory, pip_args)
     extras_list = [
         """
 py_library(

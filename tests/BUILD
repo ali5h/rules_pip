@@ -1,9 +1,8 @@
-package(default_visibility = ["//visibility:public"])
+"""tests"""
 
 load("//:defs.bzl", "py_pytest_test")
-load("@rules_python//python:defs.bzl", "py_binary", "py_test")
-load("@piptool_deps_tests//:requirements.bzl", "requirement")
-load("@piptool_deps_tests_3//:requirements.bzl", requirement_3 = "requirement")
+load("@piptool_deps_tests//:requirements.bzl", requirement_2 = "requirement")
+load("@piptool_deps_tests_3//:requirements.bzl", "requirement")
 
 py_test(
     name = "whl_test2",
@@ -19,7 +18,7 @@ py_test(
     python_version = "PY2",
     deps = [
         "//src:whllib",
-        requirement("mock"),
+        requirement_2("mock"),
     ],
 )
 
@@ -37,9 +36,9 @@ py_test(
     python_version = "PY3",
     deps = [
         "//src:whllib",
-        requirement_3("mock"),
+        requirement("mock"),
         # not need, just here for testing it can be installed
-        requirement_3("pytest"),
+        requirement("pytest"),
     ],
 )
 
@@ -49,12 +48,12 @@ py_pytest_test(
     srcs = ["test_namespace.py"],
     python_version = "PY3",
     deps = [
-        requirement_3("pytest"),
-        requirement_3("google-cloud-language"),
-        requirement_3("testing.postgresql"),
-        requirement_3("testing.mysqld"),
-        requirement_3("tensorflow"),
-        requirement_3("azure-common"),
-        requirement_3("azure-storage-blob"),
+        requirement("pytest"),
+        requirement("google-cloud-language"),
+        requirement("testing.postgresql"),
+        requirement("testing.mysqld"),
+        requirement("tensorflow"),
+        requirement("azure-common"),
+        requirement("azure-storage-blob"),
     ],
 )

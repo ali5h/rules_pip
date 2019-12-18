@@ -14,10 +14,9 @@ addons:
 
 install:
   - go get -u github.com/bazelbuild/buildifier/buildifier
+  - pip uninstall -y pip setuptools wheels
 
 script:
-  # Check that all of our tools and samples build
-  - bazel clean && bazel build --config=ci //...
   # Check that all of our tests pass
   - bazel clean && bazel test --config=ci //...
 
