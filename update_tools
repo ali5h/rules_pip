@@ -10,29 +10,29 @@ export CUSTOM_COMPILE_COMMAND="$(basename "$0")"
 export PYTHONPATH="${DIR}/third_party/py"
 
 if [ "$#" -eq 0 ] ; then
-    python "${DIR}/src/compile.py" \
-           --allow-unsafe \
-           --generate-hashes \
-           --no-emit-trusted-host \
-           --no-annotate \
-           --no-emit-find-links \
-           --no-header \
-           --no-index \
-           --output-file="${DIR}/src/requirements.txt" \
-           "${DIR}/src/requirements.in"
+    bazel run //src:compile -- \
+          --allow-unsafe \
+          --generate-hashes \
+          --no-emit-trusted-host \
+          --no-annotate \
+          --no-emit-find-links \
+          --no-header \
+          --no-index \
+          --output-file="${DIR}/src/requirements.txt" \
+          "${DIR}/src/requirements.in"
 
     rm -rf "${PYTHONPATH}"
     pip install -t "${PYTHONPATH}" -r "${DIR}/src/requirements.txt" --no-deps
 
-    python3 "${DIR}/src/compile.py" \
-            --allow-unsafe \
-           --no-emit-trusted-host \
-           --no-annotate \
-           --no-emit-find-links \
-           --no-header \
-           --no-index \
-           --output-file="${DIR}/tests/requirements.txt" \
-           "${DIR}/tests/requirements.in"
+    bazel run //src:compile -- \
+          --allow-unsafe \
+          --no-emit-trusted-host \
+          --no-annotate \
+          --no-emit-find-links \
+          --no-header \
+          --no-index \
+          --output-file="${DIR}/tests/requirements.txt" \
+          "${DIR}/tests/requirements.in"
 
     bazel test //... --test_output=errors
 else

@@ -13,6 +13,15 @@ py_library(
     ],
 )
 
+py_binary(
+    name = "compile",
+    srcs = ["compile.py"],
+    python_version = "PY3",
+    deps = [
+        requirement("pip-tools"),
+    ],
+)
+
 py_library(
     name = "pytest_helper",
     srcs = ["pytest_helper.py"],

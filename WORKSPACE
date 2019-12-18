@@ -18,6 +18,7 @@ _piptool_install()
 
 pip_import(
     name = "piptool_deps_tests_3",
+    compile = False,
     python_interpreter = "python3",
     requirements = "//tests:requirements.txt",
 )
