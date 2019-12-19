@@ -17,6 +17,7 @@ isodate==0.6.0
 mock==3.0.5
 more-itertools==8.0.2
 msrest==0.6.10
+numpy==1.17.4
 oauthlib==3.1.0
 packaging==19.2
 pluggy==0.13.1
@@ -32,9 +33,11 @@ pytz==2019.3
 requests-oauthlib==1.3.0
 requests==2.22.0
 rsa==4.0
+scipy==1.4.0
 six==1.13.0
 urllib3==1.25.7
 wcwidth==0.1.7
+xgboost==0.90
 zipp==0.6.0
 
 # The following packages are considered to be unsafe in a requirements file:
