@@ -1,4 +1,4 @@
-load("@piptool_deps//:requirements.bzl", "requirement")
+load("//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
 

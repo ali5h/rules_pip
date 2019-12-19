@@ -1,0 +1,20 @@
+local_repository(
+    name = "com_github_ali5h_rules_pip",
+    path = "..",
+)
+
+load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
+
+pip_import(
+    name = "piptool_deps_tests_3",
+    compile = False,
+    python_interpreter = "python3",
+    requirements = "//tests:requirements.txt",
+)
+
+load(
+    "@piptool_deps_tests_3//:requirements.bzl",
+    _piptool_install_tests_3 = "pip_install",
+)
+
+_piptool_install_tests_3()

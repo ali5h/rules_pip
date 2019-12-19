@@ -3,3 +3,4 @@ pip==19.2.3
 pip-tools
 setuptools
 wheel
+mock
