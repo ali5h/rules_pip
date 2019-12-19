@@ -14,5 +14,6 @@ py_pytest_test(
         requirement("azure-storage-blob"),
         # to test metadata parsing
         requirement("python-dateutil"),
+        requirement("xgboost"),
     ],
 )

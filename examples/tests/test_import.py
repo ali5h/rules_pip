@@ -3,3 +3,6 @@ def test_import():
     import google.cloud.language
     import azure.storage.blob
     import dateutil
+
+def test_xgboost():
+    import xgboost.training

@@ -7,3 +7,5 @@ azure-storage-blob
 
 # unicode metadata
 python_dateutil
+
+xgboost
