@@ -17,10 +17,9 @@ install:
   - pip uninstall -y pip setuptools wheels
 
 script:
+  # Check for issues with the format of our bazel config files.
+  - buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
+
   # Check that all of our tests pass
   - bazel clean && bazel test --config=ci //...
-
-  # Check for issues with the format of our bazel config files.
-  - buildifier -mode=check $(find . -name BUILD -type f)
-  - buildifier -mode=check $(find . -name WORKSPACE -type f)
-  - buildifier -mode=check $(find . -name '*.bzl' -type f)
+  - bazel clean && bazel test --config=ci //...

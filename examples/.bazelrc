@@ -1,0 +1,4 @@
+build --test_output=errors
+
+build:ci --curses=no
+build:ci --progress_in_terminal_title=no
