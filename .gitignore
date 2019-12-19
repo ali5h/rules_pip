@@ -1,6 +1,7 @@
 bazel*
 .vscode
 *.pyc
+__pycache__
 
 user.bazelrc
 wheels

@@ -25,16 +25,14 @@ py_test(
 
 # run the test using pytest
 py_pytest_test(
-    name = "test_namespace",
-    srcs = ["test_namespace.py"],
+    name = "test_import",
+    srcs = ["test_import.py"],
     python_version = "PY3",
     deps = [
         requirement("pytest"),
         requirement("google-cloud-language"),
-        requirement("testing.postgresql"),
-        requirement("testing.mysqld"),
-        requirement("tensorflow"),
-        requirement("azure-common"),
         requirement("azure-storage-blob"),
+        # to test metadata parsing
+        requirement("python-dateutil"),
     ],
 )

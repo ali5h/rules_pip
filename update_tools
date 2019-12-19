@@ -21,8 +21,9 @@ if [ "$#" -eq 0 ] ; then
           --output-file="${DIR}/src/requirements.txt" \
           "${DIR}/src/requirements.in"
 
-    rm -rf "${PYTHONPATH}"
-    pip install -t "${PYTHONPATH}" -r "${DIR}/src/requirements.txt" --no-deps
+    # to update third_party/py run
+    # rm -rf third_party/py
+    # pip install -t third_party/py -r "${DIR}/src/requirements.txt" --no-deps
 
     bazel run //src:compile -- \
           --allow-unsafe \

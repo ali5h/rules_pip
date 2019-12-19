@@ -1,8 +1,9 @@
 mock
-google-cloud-language
-testing.postgresql
-testing.mysqld
 pytest
-tensorflow
-azure-common
+
+# namespace test
+google-cloud-language
 azure-storage-blob
+
+# unicode metadata
+python_dateutil
