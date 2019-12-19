@@ -14,6 +14,24 @@ py_library(
 )
 
 py_binary(
+    name = "whl",
+    srcs = ["whl.py"],
+    python_version = "PY3",
+    deps = [
+        ":whllib",
+    ],
+)
+
+py_binary(
+    name = "piptool",
+    srcs = ["piptool.py"],
+    python_version = "PY3",
+    deps = [
+        requirement("pip"),
+    ],
+)
+
+py_binary(
     name = "compile",
     srcs = ["compile.py"],
     python_version = "PY3",
