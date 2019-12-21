@@ -1,7 +1,6 @@
 """tests"""
 
 load("//:defs.bzl", "py_pytest_test")
-load("//:requirements.bzl", "requirement")
 
 py_test(
     name = "whl_test",
@@ -17,6 +16,5 @@ py_test(
     python_version = "PY3",
     deps = [
         "//src:whllib",
-        requirement("mock"),
     ],
 )

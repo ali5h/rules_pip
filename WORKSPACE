@@ -1,20 +1,6 @@
 workspace(name = "com_github_ali5h_rules_pip")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
-
-pip_import(
-    name = "piptool_deps",
-    python_interpreter = "python2.7",
-    requirements = "//src:requirements.txt",
-)
-
-load(
-    "@piptool_deps//:requirements.bzl",
-    _piptool_install = "pip_install",
-)
-
-_piptool_install()
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 http_file(
     name = "grpc_whl",

@@ -1,15 +1,10 @@
-load("//:requirements.bzl", "requirement")
-
 package(default_visibility = ["//visibility:public"])
 
 py_library(
     name = "whllib",
     srcs = ["whl.py"],
     deps = [
-        requirement("pip"),
-        requirement("pkginfo"),
-        requirement("setuptools"),
-        requirement("wheel"),
+        "//third_party/py:pypi_vendor",
     ],
 )
 
@@ -27,7 +22,7 @@ py_binary(
     srcs = ["piptool.py"],
     python_version = "PY3",
     deps = [
-        requirement("pip"),
+        "//third_party/py:pypi_vendor",
     ],
 )
 
@@ -36,7 +31,7 @@ py_binary(
     srcs = ["compile.py"],
     python_version = "PY3",
     deps = [
-        requirement("pip-tools"),
+        "//third_party/py:pypi_vendor",
     ],
 )
 
