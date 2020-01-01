@@ -18,4 +18,7 @@ load(
 )
 
 # pip_install acts like pip install command and can accept arguments
-pip_install(["--only-binary", ":all"])
+pip_install([
+    "--only-binary",
+    ":all",
+])
