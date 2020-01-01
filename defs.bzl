@@ -16,21 +16,22 @@ def _pip_import_impl(repository_ctx):
 
     # make a copy for compile
     repository_ctx.file("requirements.txt", content = reqs, executable = False)
-    result = _execute(repository_ctx, [
-        repository_ctx.attr.python_interpreter,
-        repository_ctx.path(repository_ctx.attr._compiler),
-        "--allow-unsafe",
-        "--no-emit-trusted-host",
-        "--build-isolation",
-        "--no-emit-find-links",
-        "--no-header",
-        "--no-index",
-        "--output-file",
-        repository_ctx.path("requirements.txt"),
-        repository_ctx.path("requirements.in"),
-    ])
-    if result.return_code:
-        fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
+    if repository_ctx.attr.compile:
+        result = _execute(repository_ctx, [
+            repository_ctx.attr.python_interpreter,
+            repository_ctx.path(repository_ctx.attr._compiler),
+            "--allow-unsafe",
+            "--no-emit-trusted-host",
+            "--build-isolation",
+            "--no-emit-find-links",
+            "--no-header",
+            "--no-index",
+            "--output-file",
+            repository_ctx.path("requirements.txt"),
+            repository_ctx.path("requirements.in"),
+        ])
+        if result.return_code:
+            fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
 
     result = _execute(repository_ctx, [
         repository_ctx.attr.python_interpreter,
