@@ -14,7 +14,8 @@ pip_import(
 
 load(
     "@piptool_deps_tests_3//:requirements.bzl",
-    _piptool_install_tests_3 = "pip_install",
+    "pip_install",
 )
 
-_piptool_install_tests_3()
+# pip_install acts like pip install command and can accept arguments
+pip_install(["--only-binary", ":all"])
