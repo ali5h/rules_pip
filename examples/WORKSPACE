@@ -1,3 +1,43 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Download the rules_docker repository at release v0.13.0
+http_archive(
+    name = "io_bazel_rules_docker",
+    sha256 = "df13123c44b4a4ff2c2f337b906763879d94871d16411bf82dcfeba892b58607",
+    strip_prefix = "rules_docker-0.13.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.13.0/rules_docker-v0.13.0.tar.gz"],
+)
+
+load(
+    "@io_bazel_rules_docker//repositories:repositories.bzl",
+    container_repositories = "repositories",
+)
+
+container_repositories()
+
+load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
+
+container_deps()
+
+load(
+    "@io_bazel_rules_docker//container:container.bzl",
+    "container_pull",
+)
+
+container_pull(
+    name = "py3_image_base",
+    digest = "sha256:168896be6346aef393bb0cfd0878422a8b9efb7d31f72326a30b6ab59dfcdb6e",
+    registry = "gcr.io",
+    repository = "distroless/python3-debian10",
+)
+
+load(
+    "@io_bazel_rules_docker//python3:image.bzl",
+    _py_image_repos = "repositories",
+)
+
+_py_image_repos()
+
 local_repository(
     name = "com_github_ali5h_rules_pip",
     path = "..",
@@ -21,4 +61,6 @@ load(
 pip_install([
     "--only-binary",
     ":all",
+    "--platform",
+    "manylinux1_x86_64",
 ])
