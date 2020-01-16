@@ -48,7 +48,7 @@ load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
 pip_import(
     name = "piptool_deps_tests_3",
     compile = False,
-    python_interpreter = "python3",
+    python_interpreter = "python3.7",
     requirements = "//tests:requirements.txt",
 )
 
@@ -64,3 +64,10 @@ pip_install([
     "--platform",
     "manylinux1_x86_64",
 ])
+
+load("@com_github_ali5h_rules_pip//third_party/cpython:configure.bzl", "python_configure")
+
+python_configure(
+    name = "cpython37",
+    interpreter = "python3.7",
+)

@@ -162,11 +162,15 @@ _requirements = {{
   {mappings}
 }}
 
-def requirement(name):
+def requirement(name, target=None):
   name_key = name.lower()
   if name_key not in _requirements:
     fail("Could not find pip-provided dependency: '%s'" % name)
-  return _requirements[name_key]
+  req = _requirements[name_key]
+  if target != None:
+    pkg, _, _ = req.partition("//")
+    req = pkg + target
+  return req
 """.format(
                 whl_libraries="\n".join(whl_libraries), mappings=",".join(whl_targets)
             )

@@ -6,3 +6,7 @@ def test_import():
 
 def test_xgboost():
     import xgboost.training
+
+def test_numpy():
+    import numpy
+    import tests._test

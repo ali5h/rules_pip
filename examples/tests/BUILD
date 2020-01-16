@@ -7,6 +7,7 @@ load("@piptool_deps_tests_3//:requirements.bzl", "requirement")
 py_pytest_test(
     name = "test_import",
     srcs = ["test_import.py"],
+    data = [":_test.so"],
     python_version = "PY3",
     deps = [
         requirement("pytest"),
@@ -15,5 +16,25 @@ py_pytest_test(
         # to test metadata parsing
         requirement("python-dateutil"),
         requirement("xgboost"),
+        requirement("numpy"),
+    ],
+)
+
+# using numpy headers target
+cc_binary(
+    name = "_test.so",
+    srcs = ["test_numpy.c"],
+    linkopts = [
+        "-lcrypt",
+        "-lpthread",
+        "-ldl",
+        "-lutil",
+        "-lm",
+    ],
+    linkshared = True,
+    linkstatic = False,
+    deps = [
+        "@cpython37//:lib",
+        requirement("numpy", "//:headers"),
     ],
 )
