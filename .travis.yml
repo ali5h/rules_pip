@@ -1,16 +1,18 @@
 sudo: required
-dist: xenial
+dist: bionic
 language:
   - python
 python:
   - "3.7"
 addons:
   apt:
+    update: true
     sources:
       - sourceline: "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8"
         key_url: "https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg"
     packages:
       - bazel
+      - python3.7-dev
 
 install:
   - go get -u github.com/bazelbuild/buildifier/buildifier
