@@ -158,15 +158,15 @@ load("@com_github_ali5h_rules_pip//:defs.bzl", "whl_library")
 def pip_install(pip_args=[]):
   {whl_libraries}
 
-_requirements = {{
+requirements = {{
   {mappings}
 }}
 
 def requirement(name, target=None):
   name_key = name.lower()
-  if name_key not in _requirements:
+  if name_key not in requirements:
     fail("Could not find pip-provided dependency: '%s'" % name)
-  req = _requirements[name_key]
+  req = requirements[name_key]
   if target != None:
     pkg, _, _ = req.partition("//")
     req = pkg + target
