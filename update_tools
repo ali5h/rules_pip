@@ -36,6 +36,12 @@ if [ "$#" -eq 0 ] ; then
           --output-file="${DIR}/examples/tests/requirements.txt" \
           "${DIR}/examples/tests/requirements.in"
 
+    bazel build //src:piptool.par //src:compile.par //src:whl.par
+
+    cp -f ./bazel-bin/src/compile.par ./tools/compile.par
+    cp -f ./bazel-bin/src/piptool.par ./tools/piptool.par
+    cp -f ./bazel-bin/src/whl.par ./tools/whl.par
+
     bazel test //... --test_output=errors
 
     pushd examples

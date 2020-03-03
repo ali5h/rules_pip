@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+load("@subpar//:subpar.bzl", "par_binary")
+
 py_library(
     name = "whllib",
     srcs = ["whl.py"],
@@ -8,7 +10,7 @@ py_library(
     ],
 )
 
-py_binary(
+par_binary(
     name = "whl",
     srcs = ["whl.py"],
     python_version = "PY3",
@@ -17,7 +19,7 @@ py_binary(
     ],
 )
 
-py_binary(
+par_binary(
     name = "piptool",
     srcs = ["piptool.py"],
     python_version = "PY3",
@@ -26,7 +28,7 @@ py_binary(
     ],
 )
 
-py_binary(
+par_binary(
     name = "compile",
     srcs = ["compile.py"],
     python_version = "PY3",

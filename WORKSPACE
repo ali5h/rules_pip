@@ -1,6 +1,7 @@
 workspace(name = "com_github_ali5h_rules_pip")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_file(
     name = "grpc_whl",
@@ -90,4 +91,16 @@ http_file(
     urls = [("https://pypi.python.org/packages/b1/df/" +
              "96686bc6abafacb579334f8c61be2f025f1be161d266893d17b47afd7685/" +
              "google_cloud_spanner-1.9.0-py2.py3-none-any.whl")],
+)
+
+git_repository(
+    name = "subpar",
+    remote = "https://github.com/google/subpar",
+    commit = "9fae6b63cfeace2e0fb93c9c1ebdc28d3991b16f",
+)
+    
+git_repository(
+    name = "rules_python",
+    remote = "https://github.com/Asana/rules_python",
+    commit = "3558f199328f4784cb735e112c8144fbc8226318",
 )

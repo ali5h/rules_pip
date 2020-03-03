@@ -62,14 +62,12 @@ wheels.
         ),
         "_script": attr.label(
             executable = True,
-            default = Label("@com_github_ali5h_rules_pip//src:piptool.py"),
-            allow_single_file = True,
+            default = Label("//tools:piptool.par"),
             cfg = "host",
         ),
         "_compiler": attr.label(
             executable = True,
-            default = Label("@com_github_ali5h_rules_pip//src:compile.py"),
-            allow_single_file = True,
+            default = Label("//tools:compile.par"),
             cfg = "host",
         ),
         "_vendor": attr.label(
@@ -123,7 +121,7 @@ wheels.
         "pip_args": attr.string_list(default = []),
         "_script": attr.label(
             executable = True,
-            default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
+            default = Label("//tools:whl.par"),
             cfg = "host",
         ),
         "_vendor": attr.label(
