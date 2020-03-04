@@ -69,5 +69,6 @@ load("@com_github_ali5h_rules_pip//third_party/cpython:configure.bzl", "python_c
 
 python_configure(
     name = "cpython37",
+    devel = True,
     interpreter = "python3.7",
 )
