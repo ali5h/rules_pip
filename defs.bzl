@@ -10,6 +10,11 @@ def _execute(repository_ctx, arguments):
 
 def _pip_import_impl(repository_ctx):
     """Core implementation of pip_import."""
+
+    python_interpreter = repository_ctx.attr.python_interpreter
+    if repository_ctx.attr.python_runtime:
+        python_interpreter = repository_ctx.path(repository_ctx.attr.python_runtime)
+
     repository_ctx.file("BUILD", "")
     reqs = repository_ctx.read(repository_ctx.attr.requirements)
 
@@ -17,7 +22,7 @@ def _pip_import_impl(repository_ctx):
     repository_ctx.file("requirements.txt", content = reqs, executable = False)
     if repository_ctx.attr.compile:
         result = _execute(repository_ctx, [
-            repository_ctx.attr.python_interpreter,
+            python_interpreter,
             repository_ctx.path(repository_ctx.attr._compiler),
             "--allow-unsafe",
             "--no-emit-trusted-host",
@@ -32,7 +37,7 @@ def _pip_import_impl(repository_ctx):
             fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
 
     result = _execute(repository_ctx, [
-        repository_ctx.attr.python_interpreter,
+        python_interpreter,
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
         repository_ctx.attr.name,
@@ -54,6 +59,10 @@ pip_import = repository_rule(
         "python_interpreter": attr.string(default = "python", doc = """
 The command to run the Python interpreter used to invoke pip and unpack the
 wheels.
+"""),
+        "python_runtime": attr.label(doc = """
+The label to the Python run-time interpreted used to invoke pip and unpack the wheels.
+If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "compile": attr.bool(
             default = True,
@@ -83,8 +92,12 @@ wheels.
 def _whl_impl(repository_ctx):
     """Core implementation of whl_library."""
 
+    python_interpreter = repository_ctx.attr.python_interpreter
+    if repository_ctx.attr.python_runtime:
+        python_interpreter = repository_ctx.path(repository_ctx.attr.python_runtime)
+
     args = [
-        repository_ctx.attr.python_interpreter,
+        python_interpreter,
         repository_ctx.path(repository_ctx.attr._script),
         "--requirements",
         repository_ctx.attr.requirements_repo,
@@ -117,6 +130,10 @@ whl_library = repository_rule(
         "python_interpreter": attr.string(default = "python", doc = """
 The command to run the Python interpreter used to invoke pip and unpack the
 wheels.
+"""),
+        "python_runtime": attr.label(doc = """
+The label to the Python run-time interpreted used to invoke pip and unpack the wheels.
+If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "pip_args": attr.string_list(default = []),
         "_script": attr.label(

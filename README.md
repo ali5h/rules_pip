@@ -51,6 +51,9 @@ pip_import(
    # default value is "python"
    # python_interpreter="python3",
 
+   # or specify a python runtime label
+   # python_runtime="@python3_x86_64//:bin/python3",
+
    # set compile to false only if requirements files is already compiled
    # compile = False
 )
