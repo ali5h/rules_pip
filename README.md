@@ -42,7 +42,7 @@ http_archive(
     urls = ["https://github.com/ali5h/rules_pip/archive/<revision>.tar.gz"],
 )
 
-load("@com_github_alish_rules_pip//:defs.bzl", "pip_import")
+load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
 
 pip_import(
    name = "pip_deps",
@@ -58,6 +58,6 @@ pip_import(
    # compile = False
 )
 
-load("@my_deps//:requirements.bzl", "pip_install")
+load("@pip_deps//:requirements.bzl", "pip_install")
 pip_install([<optional pip install args])
 ```
