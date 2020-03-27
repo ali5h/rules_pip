@@ -15,15 +15,13 @@ addons:
       - python3.7-dev
 
 install:
-  - mkdir $PWD/tools
-  - export PATH=$PATH:$PWD/tools
-  - curl -LJo $PWD/tools/buildifier  https://github.com/bazelbuild/buildtools/releases/download/2.2.1/buildifier
-  - chmod +x $PWD/tools/buildifier
+  - curl -LJO https://github.com/bazelbuild/buildtools/releases/download/2.2.1/buildifier
+  - chmod +x buildifier
   - pip uninstall -y pip setuptools wheels
 
 script:
   # Check for issues with the format of our bazel config files.
-  - buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
+  - ./buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
 
   # Check that all of our tests pass
   - bazel clean && bazel test --config=ci //...
