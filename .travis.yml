@@ -15,7 +15,10 @@ addons:
       - python3.7-dev
 
 install:
-  - go get -u github.com/bazelbuild/buildifier/buildifier
+  - mkdir $PWD/tools
+  - export PATH=$PATH:$PWD/tools
+  - curl -LJo $PWD/tools/buildifier  https://github.com/bazelbuild/buildtools/releases/download/2.2.1/buildifier
+  - chmod +x $PWD/tools/buildifier
   - pip uninstall -y pip setuptools wheels
 
 script:
