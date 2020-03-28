@@ -72,3 +72,8 @@ python_configure(
     devel = True,
     interpreter = "python3.7",
 )
+
+# added at the end to not override rules_docker
+register_toolchains(
+    "@//:toolchain",
+)
