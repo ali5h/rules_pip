@@ -3,7 +3,7 @@
 pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/easy_install.py")
 
 def _execute(repository_ctx, arguments):
-    pip_vendor = str(repository_ctx.path(repository_ctx.attr._vendor).dirname)
+    pip_vendor = str(repository_ctx.path(pip_vendor_label).dirname)
     return repository_ctx.execute(arguments, environment = {
         "PYTHONPATH": pip_vendor,
     })
@@ -79,12 +79,6 @@ If the label is specified it will overwrite the python_interpreter attribute.
             allow_single_file = True,
             cfg = "host",
         ),
-        "_vendor": attr.label(
-            executable = True,
-            default = pip_vendor_label,
-            allow_single_file = True,
-            cfg = "host",
-        ),
     },
     implementation = _pip_import_impl,
 )
@@ -139,12 +133,6 @@ If the label is specified it will overwrite the python_interpreter attribute.
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
-            cfg = "host",
-        ),
-        "_vendor": attr.label(
-            executable = True,
-            default = pip_vendor_label,
-            allow_single_file = True,
             cfg = "host",
         ),
     },
