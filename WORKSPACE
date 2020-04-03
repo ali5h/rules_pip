@@ -91,3 +91,13 @@ http_file(
              "96686bc6abafacb579334f8c61be2f025f1be161d266893d17b47afd7685/" +
              "google_cloud_spanner-1.9.0-py2.py3-none-any.whl")],
 )
+
+http_file(
+    name = "pytest_flask_0_14_0_whl",
+    downloaded_file_path = "pytest_flask-0.14.0-py2.py3-none-any.whl",
+    sha256 = "e9b120d23f73e0495d8fa1bc3b580b18cc9f98b8d6808bc45fdbcbab7d718242",
+    # From https://pypi.org/simple/pytest-flask/
+    urls = [("https://files.pythonhosted.org/packages/52/a8/" +
+             "3fab52af3688311921205439e3e543b2b1fcce0e3c8acd2cad8061ecfe4f/" +
+             "pytest_flask-0.14.0-py2.py3-none-any.whl")]
+)

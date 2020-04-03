@@ -102,6 +102,20 @@ class WheelTest(unittest.TestCase):
         ]
         self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
 
+    @patch("platform.python_version", return_value="2.7.13")
+    def test_pytest_flask_whl(self, *args):
+        td = pkginfo.Wheel(
+            TestData(
+                "pytest_flask_0_14_0_whl/file/"
+                + "pytest_flask-0.14.0-py2.py3-none-any.whl"
+            )
+        )
+        expected_deps = [
+            'pytest',
+            'Flask',
+            'Werkzeug',
+        ]
+        self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
 
 if __name__ == "__main__":
     unittest.main()

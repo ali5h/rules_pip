@@ -11,6 +11,7 @@ py_test(
         "@google_cloud_language_whl//file",
         "@grpc_whl//file",
         "@mock_whl//file",
+        "@pytest_flask_0_14_0_whl//file",
     ],
     main = "test_whl.py",
     python_version = "PY3",

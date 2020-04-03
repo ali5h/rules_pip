@@ -105,7 +105,7 @@ def dependencies(pkg, extra=None):
     :rtype: list
 
     """
-    ret = []
+    ret = set()
     for dist in pkg.requires_dist:
         requirement = pkg_resources.Requirement.parse(dist)
         if extra:
@@ -119,14 +119,14 @@ def dependencies(pkg, extra=None):
                 continue
 
         if requirement.extras:
-            ret.extend(
+            ret = ret | set([
                 "{}[{}]".format(requirement.name, dist_extra)
                 for dist_extra in requirement.extras
-            )
+            ])
         else:
-            ret.append(requirement.name)
+            ret.add(requirement.name)
 
-    return ret
+    return list(ret)
 
 
 def _cleanup(directory, pattern):
