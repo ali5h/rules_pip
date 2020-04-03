@@ -99,5 +99,5 @@ http_file(
     # From https://pypi.org/simple/pytest-flask/
     urls = [("https://files.pythonhosted.org/packages/52/a8/" +
              "3fab52af3688311921205439e3e543b2b1fcce0e3c8acd2cad8061ecfe4f/" +
-             "pytest_flask-0.14.0-py2.py3-none-any.whl")]
+             "pytest_flask-0.14.0-py2.py3-none-any.whl")],
 )
