@@ -91,9 +91,9 @@ def _whl_impl(repository_ctx):
     if repository_ctx.attr.python_runtime:
         python_interpreter = repository_ctx.path(repository_ctx.attr.python_runtime)
 
-    if "--timeout" in repository_ctx.attr.pip_args:
-        fail("Please provide timeout in pip_import rule")
-    pip_args = repository_ctx.attr.pip_args + ["--timeout", repository_ctx.attr.timeout]
+    pip_args = repository_ctx.attr.pip_args
+    if "--timeout" not in repository_ctx.attr.pip_args:
+        pip_args = repository_ctx.attr.pip_args + ["--timeout", repository_ctx.attr.timeout]
 
     args = [
         python_interpreter,
