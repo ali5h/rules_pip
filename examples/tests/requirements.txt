@@ -37,7 +37,7 @@ scipy==1.4.1
 six==1.14.0
 urllib3==1.25.7
 wcwidth==0.1.8
-xgboost==0.90
+xgboost==1.0.2
 zipp==1.0.0
 
 # The following packages are considered to be unsafe in a requirements file:

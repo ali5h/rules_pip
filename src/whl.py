@@ -164,7 +164,7 @@ def main():
         description="Create py_library rule for a WHL file."
     )
     parser.add_argument(
-        "package", action="store", help=("The package name. This is passed to pip.")
+        "--package", action="store", help=("The package name. This is passed to pip.")
     )
     parser.add_argument(
         "--requirements",
@@ -183,22 +183,17 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--pip-arg",
-        action="append",
-        dest="pip_args",
-        help="Extra pip args. (e.g. --pip_arg={'-c','reqs.txt'}",
-        default=[],
-    )
-    parser.add_argument(
         "--extras",
         action="append",
         help="The set of extras for which to generate library targets.",
     )
 
-    args = parser.parse_args()
+    args, pip_args = parser.parse_known_args()
 
-    pip_args = args.pip_args + ["-c", args.constraint]
+    pip_args += ["-c", args.constraint]
+
     configure_reproducible_wheels()
+
     pkg = install_package(args.package, args.directory, pip_args)
     extras_list = [
         """

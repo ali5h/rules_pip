@@ -64,13 +64,15 @@ def repository_name(name, version, python_version):
     return clean_name(canonical)
 
 
-def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter):
+def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, timeout):
     """FIXME! briefly describe function
 
     :param name: package nane
     :param extras: extras for this lib
     :param repo_name: repo name used for this lib
     :param pip_repo_name: pip_import repo
+    :param python_interpreter:
+    :param timeout: timeout for pip actions
     :returns: whl_library rule definition
     :rtype: str
 
@@ -85,12 +87,14 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter):
         python_interpreter = "{python_interpreter}",
         extras = [{extras}],
         pip_args = pip_args,
+        timeout = {timeout},
     )""".format(
         name=name,
         repo_name=repo_name,
         pip_repo_name=pip_repo_name,
         python_interpreter=python_interpreter,
         extras=",".join(['"%s"' % extra for extra in extras]),
+        timeout=timeout,
     )
 
 
@@ -124,6 +128,12 @@ def main():
         help=("The requirements.bzl file to export."),
         required=True,
     )
+    parser.add_argument(
+        "--timeout",
+        help=("Timeout used for pip actions."),
+        type=int,
+        default=60,
+    )
     args = parser.parse_args()
 
     reqs = get_requirements(args.input)
@@ -145,7 +155,7 @@ def main():
             )
         )
         whl_libraries.append(
-            whl_library(name, extras, repo_name, args.name, sys.executable)
+            whl_library(name, extras, repo_name, args.name, sys.executable, args.timeout)
         )
 
     with open(args.output, "w") as _f:

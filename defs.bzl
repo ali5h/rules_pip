@@ -6,7 +6,7 @@ def _execute(repository_ctx, arguments):
     pip_vendor = str(repository_ctx.path(pip_vendor_label).dirname)
     return repository_ctx.execute(arguments, environment = {
         "PYTHONPATH": pip_vendor,
-    })
+    }, timeout = repository_ctx.attr.timeout, quiet = False)
 
 def _pip_import_impl(repository_ctx):
     """Core implementation of pip_import."""
@@ -67,6 +67,7 @@ If the label is specified it will overwrite the python_interpreter attribute.
         "compile": attr.bool(
             default = True,
         ),
+        "timeout": attr.int(default = 60, doc = "Timeout for pip actions"),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:piptool.py"),
@@ -90,6 +91,10 @@ def _whl_impl(repository_ctx):
     if repository_ctx.attr.python_runtime:
         python_interpreter = repository_ctx.path(repository_ctx.attr.python_runtime)
 
+    if "--timeout" in repository_ctx.attr.pip_args:
+        fail("Please provide timeout in pip_import rule")
+    pip_args = repository_ctx.attr.pip_args + ["--timeout", repository_ctx.attr.timeout]
+
     args = [
         python_interpreter,
         repository_ctx.path(repository_ctx.attr._script),
@@ -101,16 +106,15 @@ def _whl_impl(repository_ctx):
         repository_ctx.path(
             Label("%s//:requirements.txt" % repository_ctx.attr.requirements_repo),
         ),
+        "--package",
         repository_ctx.attr.pkg,
-    ] + [
-        "--pip-arg=%s" % pip_arg
-        for pip_arg in repository_ctx.attr.pip_args
     ]
     if repository_ctx.attr.extras:
         args += [
             "--extras=%s" % extra
             for extra in repository_ctx.attr.extras
         ]
+    args += pip_args
 
     result = _execute(repository_ctx, args)
     if result.return_code:
@@ -130,6 +134,7 @@ The label to the Python run-time interpreted used to invoke pip and unpack the w
 If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "pip_args": attr.string_list(default = []),
+        "timeout": attr.int(default = 60, doc = "Timeout for pip actions"),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
