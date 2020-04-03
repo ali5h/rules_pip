@@ -115,7 +115,7 @@ class WheelTest(unittest.TestCase):
             'Flask',
             'Werkzeug',
         ]
-        self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
+        self.assertEqual(whl.dependencies(td), expected_deps)
 
 if __name__ == "__main__":
     unittest.main()
