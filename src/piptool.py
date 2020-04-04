@@ -132,7 +132,7 @@ def main():
         "--timeout",
         help=("Timeout used for pip actions."),
         type=int,
-        default=60,
+        required=True,
     )
     args = parser.parse_args()
 

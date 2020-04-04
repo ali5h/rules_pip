@@ -45,6 +45,8 @@ def _pip_import_impl(repository_ctx):
         repository_ctx.path("requirements.txt"),
         "--output",
         repository_ctx.path("requirements.bzl"),
+        "--timeout",
+        repository_ctx.attr.timeout,
     ])
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
@@ -67,7 +69,7 @@ If the label is specified it will overwrite the python_interpreter attribute.
         "compile": attr.bool(
             default = True,
         ),
-        "timeout": attr.int(default = 60, doc = "Timeout for pip actions"),
+        "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:piptool.py"),
@@ -134,7 +136,7 @@ The label to the Python run-time interpreted used to invoke pip and unpack the w
 If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "pip_args": attr.string_list(default = []),
-        "timeout": attr.int(default = 60, doc = "Timeout for pip actions"),
+        "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),

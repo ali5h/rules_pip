@@ -47,7 +47,7 @@ load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
 
 pip_import(
     name = "piptool_deps_tests_3",
-    timeout = 60,
+    timeout = 1200,
     compile = False,
     python_interpreter = "python3.7",
     requirements = "//tests:requirements.txt",
