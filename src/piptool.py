@@ -172,6 +172,8 @@ _requirements = {{
   {mappings}
 }}
 
+all_requirements = _requirements.values()
+
 def requirement(name, target=None):
   name_key = name.lower()
   if name_key not in _requirements:
