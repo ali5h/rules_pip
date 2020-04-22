@@ -24,5 +24,6 @@ script:
   - ./buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
 
   # Check that all of our tests pass
+  - bazel info
   - bazel clean && bazel test --config=ci //...
   - cd examples; bazel clean && bazel test --config=ci //...

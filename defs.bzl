@@ -46,7 +46,7 @@ def _pip_import_impl(repository_ctx):
         "--output",
         repository_ctx.path("requirements.bzl"),
         "--timeout",
-        repository_ctx.attr.timeout,
+        str(repository_ctx.attr.timeout),
     ])
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
@@ -95,7 +95,7 @@ def _whl_impl(repository_ctx):
 
     pip_args = repository_ctx.attr.pip_args
     if "--timeout" not in repository_ctx.attr.pip_args:
-        pip_args = repository_ctx.attr.pip_args + ["--timeout", repository_ctx.attr.timeout]
+        pip_args = repository_ctx.attr.pip_args + ["--timeout", str(repository_ctx.attr.timeout)]
 
     args = [
         python_interpreter,
