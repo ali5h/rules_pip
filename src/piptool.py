@@ -136,7 +136,7 @@ def main():
     )
     args = parser.parse_args()
 
-    reqs = get_requirements(args.input)
+    reqs = sorted(get_requirements(args.input), key=as_tuple)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = []
     whl_libraries = []

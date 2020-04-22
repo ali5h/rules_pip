@@ -126,7 +126,7 @@ def dependencies(pkg, extra=None):
         else:
             ret.add(requirement.name)
 
-    return list(ret)
+    return sorted(list(ret))
 
 
 def _cleanup(directory, pattern):
