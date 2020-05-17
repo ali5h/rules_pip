@@ -146,7 +146,16 @@ If the label is specified it will overwrite the python_interpreter attribute.
     implementation = _whl_impl,
 )
 
-def py_pytest_test(name, **kwargs):
+def py_pytest_test(
+        name,
+        # This argument exists for back-compatibility with earlier versions
+        pytest_args = [
+            "--ignore=external",
+            ".",
+            "-p",
+            "no:cacheprovider",
+        ],
+        **kwargs):
     """A macro that runs pytest tests by using a test runner
     :param name: rule name
     :param kwargs: are passed to py_test, with srcs and deps attrs modified
@@ -157,6 +166,7 @@ def py_pytest_test(name, **kwargs):
 
     deps = kwargs.pop("deps", []) + ["@com_github_ali5h_rules_pip//src:pytest_helper"]
     srcs = kwargs.pop("srcs", []) + ["@com_github_ali5h_rules_pip//src:pytest_helper"]
+    args = kwargs.pop("args", []) + pytest_args
 
     # failsafe, pytest won't work otw.
     for src in srcs:
@@ -169,5 +179,6 @@ def py_pytest_test(name, **kwargs):
         srcs = srcs,
         main = "pytest_helper.py",
         deps = deps,
+        args = args,
         **kwargs
     )
