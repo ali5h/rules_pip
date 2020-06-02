@@ -41,7 +41,7 @@ def configure_reproducible_wheels():
 def _create_nspkg_init(dirpath):
     """Creates an init file to enable namespacing"""
     if not os.path.exists(dirpath):
-        # Handle 
+        # Handle missing namespace packages by ignoring them
         return
     nspkg_init = os.path.join(dirpath, "__init__.py")
     with open(nspkg_init, "w") as nspkg:
