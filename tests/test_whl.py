@@ -118,5 +118,14 @@ class WheelTest(unittest.TestCase):
         self.assertEqual(len(whl.dependencies(td)), len(expected_deps))
         self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
 
+    def test_ruamel_yaml_clib_whl(self):
+        td = pkginfo.Wheel(
+            TestData("ruamel_yaml_clib_0_2_0_whl/file/ruamel.yaml.clib-0.2.0-cp27-cp27m-manylinux1_x86_64.whl")
+        )
+        self.assertEqual(
+            set(whl.dependencies(td)), set([])
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -101,3 +101,13 @@ http_file(
              "3fab52af3688311921205439e3e543b2b1fcce0e3c8acd2cad8061ecfe4f/" +
              "pytest_flask-0.14.0-py2.py3-none-any.whl")],
 )
+
+http_file(
+    name = "ruamel_yaml_clib_0_2_0_whl",
+    downloaded_file_path = "ruamel.yaml.clib-0.2.0-cp27-cp27m-manylinux1_x86_64.whl",
+    sha256 = "4d55386129291b96483edcb93b381470f7cd69f97585829b048a3d758d31210a",
+    # From https://pypi.org/simple/pytest-flask/
+    urls = [("https://files.pythonhosted.org/packages/c4/25/" +
+             "5fe65a2366fcfc82d85294bc7a92cb12e755ece352b398070e97dbb5c2ef/" +
+             "ruamel.yaml.clib-0.2.0-cp27-cp27m-manylinux1_x86_64.whl")],
+)
