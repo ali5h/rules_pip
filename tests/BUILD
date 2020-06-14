@@ -12,6 +12,7 @@ py_test(
         "@grpc_whl//file",
         "@mock_whl//file",
         "@pytest_flask_0_14_0_whl//file",
+        "@ruamel_yaml_clib_0_2_0_whl//file",
     ],
     main = "test_whl.py",
     python_version = "PY3",
