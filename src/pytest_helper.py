@@ -3,7 +3,7 @@ import pytest
 
 
 def run(argv=None):
-    args = sys.argv + ["--ignore=external", ".", "-p", "no:cacheprovider"]
+    args = sys.argv
     return pytest.main(args)
 
 
