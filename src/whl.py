@@ -111,6 +111,8 @@ def dependencies(pkg, extra=None):
     ret = set()
     for dist in pkg.requires_dist:
         requirement = pkg_resources.Requirement.parse(dist)
+        # we replace all underscores with dash, to make package names similiar in all cases
+        name = requirement.name.replace('_', '-')
         if extra:
             # for extras we don't grab dependencies for the main pkg,
             # those are already in the main plg rule
@@ -123,11 +125,11 @@ def dependencies(pkg, extra=None):
 
         if requirement.extras:
             ret = ret | set([
-                "{}[{}]".format(requirement.name, dist_extra)
+                "{}[{}]".format(name, dist_extra)
                 for dist_extra in requirement.extras
             ])
         else:
-            ret.add(requirement.name)
+            ret.add(name)
 
     return sorted(list(ret))
 
