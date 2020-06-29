@@ -4,15 +4,15 @@ import re
 import sys
 
 from pip._internal.req.req_file import parse_requirements
-from pip._internal.download import PipSession
-
+from pip._internal.network.session import PipSession
+from pip._vendor.packaging.requirements import Requirement
 
 def clean_name(name):
     # Escape any illegal characters with underscore.
     return re.sub("[-.+]", "_", name)
 
 
-def is_pinned_requirement(ireq):
+def is_pinned_requirement(preq, ireq = None):
     """
     Returns whether an InstallRequirement is a "pinned" requirement.
     An InstallRequirement is considered pinned if:
@@ -26,22 +26,24 @@ def is_pinned_requirement(ireq):
         django~=1.8   # NOT pinned
         django==1.*   # NOT pinned
     """
-    if ireq.editable:
+    if preq.is_editable or preq.requirement is None:
         return False
 
-    if ireq.req is None or len(ireq.specifier._specs) != 1:
+    ireq = ireq or Requirement(preq)
+    if len(ireq.specifier._specs) != 1:
         return False
 
     op, version = next(iter(ireq.specifier._specs))._spec
     return (op == "==" or op == "===") and not version.endswith(".*")
 
 
-def as_tuple(ireq):
+def as_tuple(preq):
     """
     Pulls out the (name: str, version:str, extras:(str)) tuple from
     the pinned InstallRequirement.
     """
-    if not is_pinned_requirement(ireq):
+    ireq = Requirement(preq.requirement)
+    if not is_pinned_requirement(preq, ireq):
         raise TypeError("Expected a pinned InstallRequirement, got {}".format(ireq))
 
     name = ireq.name

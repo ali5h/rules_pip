@@ -3,10 +3,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from contextlib import contextmanager
 
-from .._compat import FAVORITE_HASH
+from pip._internal.utils.hashes import FAVORITE_HASH
+
+from .._compat import PIP_VERSION
 from .base import BaseRepository
 
-from piptools.utils import as_tuple, key_from_req, make_install_requirement
+from piptools.utils import as_tuple, key_from_ireq, make_install_requirement
 
 
 def ireq_satisfied_by_existing_pin(ireq, existing_pin):
@@ -15,7 +17,9 @@ def ireq_satisfied_by_existing_pin(ireq, existing_pin):
     previously encountered version pin.
     """
     version = next(iter(existing_pin.req.specifier)).version
-    return version in ireq.req.specifier
+    return ireq.req.specifier.contains(
+        version, prereleases=existing_pin.req.specifier.prereleases
+    )
 
 
 class LocalRequirementsRepository(BaseRepository):
@@ -56,7 +60,7 @@ class LocalRequirementsRepository(BaseRepository):
         self.repository.freshen_build_caches()
 
     def find_best_match(self, ireq, prereleases=None):
-        key = key_from_req(ireq.req)
+        key = key_from_ireq(ireq)
         existing_pin = self.existing_pins.get(key)
         if existing_pin and ireq_satisfied_by_existing_pin(ireq, existing_pin):
             project, version, _ = as_tuple(existing_pin)
@@ -70,10 +74,13 @@ class LocalRequirementsRepository(BaseRepository):
         return self.repository.get_dependencies(ireq)
 
     def get_hashes(self, ireq):
-        key = key_from_req(ireq.req)
+        key = key_from_ireq(ireq)
         existing_pin = self.existing_pins.get(key)
         if existing_pin and ireq_satisfied_by_existing_pin(ireq, existing_pin):
-            hashes = existing_pin.options.get("hashes", {})
+            if PIP_VERSION[:2] <= (20, 0):
+                hashes = existing_pin.options.get("hashes", {})
+            else:
+                hashes = existing_pin.hash_options
             hexdigests = hashes.get(FAVORITE_HASH)
             if hexdigests:
                 return {
@@ -85,3 +92,6 @@ class LocalRequirementsRepository(BaseRepository):
     def allow_all_wheels(self):
         with self.repository.allow_all_wheels():
             yield
+
+    def copy_ireq_dependencies(self, source, dest):
+        self.repository.copy_ireq_dependencies(source, dest)
