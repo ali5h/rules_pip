@@ -3,5 +3,8 @@ bazel*
 *.pyc
 __pycache__
 
+third_party/py/bin/
+RECORD
+
 user.bazelrc
 wheels

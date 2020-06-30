@@ -3,8 +3,9 @@ import logging
 import re
 import sys
 
+from pip._internal.network.session import PipSession
 from pip._internal.req.req_file import parse_requirements
-from pip._internal.download import PipSession
+from pip._vendor.packaging.requirements import Requirement
 
 
 def clean_name(name):
@@ -12,10 +13,10 @@ def clean_name(name):
     return re.sub("[-.+]", "_", name)
 
 
-def is_pinned_requirement(ireq):
+def is_pinned_requirement(req, editable):
     """
-    Returns whether an InstallRequirement is a "pinned" requirement.
-    An InstallRequirement is considered pinned if:
+    Returns whether a Requirement is a "pinned" requirement.
+    A Requirement is considered pinned if:
     - Is not editable
     - It has exactly one specifier
     - That specifier is "=="
@@ -26,27 +27,28 @@ def is_pinned_requirement(ireq):
         django~=1.8   # NOT pinned
         django==1.*   # NOT pinned
     """
-    if ireq.editable:
+    if editable:
         return False
 
-    if ireq.req is None or len(ireq.specifier._specs) != 1:
+    if len(req.specifier._specs) != 1:
         return False
 
-    op, version = next(iter(ireq.specifier._specs))._spec
+    op, version = next(iter(req.specifier._specs))._spec
     return (op == "==" or op == "===") and not version.endswith(".*")
 
 
-def as_tuple(ireq):
+def as_tuple(preq):
     """
     Pulls out the (name: str, version:str, extras:(str)) tuple from
-    the pinned InstallRequirement.
+    the pinned ParsedRequirement.
     """
-    if not is_pinned_requirement(ireq):
-        raise TypeError("Expected a pinned InstallRequirement, got {}".format(ireq))
+    req = Requirement(preq.requirement)
+    if not is_pinned_requirement(req, preq.is_editable):
+        raise TypeError("Expected a pinned requirement, got {}".format(req))
 
-    name = ireq.name
-    version = next(iter(ireq.specifier._specs))._spec[1]
-    extras = tuple(sorted(ireq.extras))
+    name = req.name
+    version = next(iter(req.specifier._specs))._spec[1]
+    extras = tuple(sorted(req.extras))
     return name, version, extras
 
 
@@ -129,10 +131,7 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--timeout",
-        help=("Timeout used for pip actions."),
-        type=int,
-        required=True,
+        "--timeout", help=("Timeout used for pip actions."), type=int, required=True,
     )
     args = parser.parse_args()
 
@@ -155,7 +154,9 @@ def main():
             )
         )
         whl_libraries.append(
-            whl_library(name, extras, repo_name, args.name, sys.executable, args.timeout)
+            whl_library(
+                name, extras, repo_name, args.name, sys.executable, args.timeout
+            )
         )
 
     with open(args.output, "w") as _f:

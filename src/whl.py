@@ -6,9 +6,11 @@ import os
 import shutil
 import sys
 
-import pkginfo
-from pip._internal.commands import InstallCommand
+from pip._internal.commands import create_command
 from pip._vendor import pkg_resources
+
+import pkginfo
+
 
 # https://github.com/dillon-giacoppo/rules_python_external/blob/master/tools/wheel_wrapper.py
 def configure_reproducible_wheels():
@@ -69,8 +71,8 @@ def install_package(pkg, directory, pip_args):
         "--ignore-requires-python",
         pkg,
     ] + pip_args
-    cmd = InstallCommand()
-    cmd.run(*cmd.parse_args(pip_args))
+    cmd = create_command("install")
+    cmd.main(pip_args)
 
     # need dist-info directory for pkg_resources to be able to find the packages
     dist_info = glob.glob(os.path.join(directory, "*.dist-info"))[0]
@@ -112,7 +114,7 @@ def dependencies(pkg, extra=None):
     for dist in pkg.requires_dist:
         requirement = pkg_resources.Requirement.parse(dist)
         # we replace all underscores with dash, to make package names similiar in all cases
-        name = requirement.name.replace('_', '-')
+        name = requirement.name.replace("_", "-")
         if extra:
             # for extras we don't grab dependencies for the main pkg,
             # those are already in the main plg rule
@@ -124,10 +126,9 @@ def dependencies(pkg, extra=None):
                 continue
 
         if requirement.extras:
-            ret = ret | set([
-                "{}[{}]".format(name, dist_extra)
-                for dist_extra in requirement.extras
-            ])
+            ret = ret | set(
+                ["{}[{}]".format(name, dist_extra) for dist_extra in requirement.extras]
+            )
         else:
             ret.add(name)
 

@@ -6,8 +6,10 @@ A wheel is a built archive format.
 
 import os
 import shutil
+import stat
 import sys
 import re
+from collections import OrderedDict
 from email.generator import Generator
 from distutils.core import Command
 from distutils.sysconfig import get_python_version
@@ -15,6 +17,7 @@ from distutils import log as logger
 from glob import iglob
 from shutil import rmtree
 from warnings import warn
+from zipfile import ZIP_DEFLATED, ZIP_STORED
 
 import pkg_resources
 
@@ -40,15 +43,26 @@ def safer_version(version):
     return safe_version(version).replace('-', '_')
 
 
+def remove_readonly(func, path, excinfo):
+    print(str(excinfo[1]))
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 class bdist_wheel(Command):
 
     description = 'create a wheel distribution'
+
+    supported_compressions = OrderedDict([
+        ('stored', ZIP_STORED),
+        ('deflated', ZIP_DEFLATED)
+    ])
 
     user_options = [('bdist-dir=', 'b',
                      "temporary directory for creating the distribution"),
                     ('plat-name=', 'p',
                      "platform name to embed in generated filenames "
-                     "(default: %s)" % get_platform()),
+                     "(default: %s)" % get_platform(None)),
                     ('keep-temp', 'k',
                      "keep the pseudo-installation tree around after " +
                      "creating the distribution archive"),
@@ -68,6 +82,10 @@ class bdist_wheel(Command):
                     ('universal', None,
                      "make a universal wheel"
                      " (default: false)"),
+                    ('compression=', None,
+                     "zipfile compression (one of: {})"
+                     " (default: 'deflated')"
+                     .format(', '.join(supported_compressions))),
                     ('python-tag=', None,
                      "Python implementation compatibility tag"
                      " (default: py%s)" % get_impl_ver()[0]),
@@ -97,6 +115,7 @@ class bdist_wheel(Command):
         self.owner = None
         self.group = None
         self.universal = False
+        self.compression = 'deflated'
         self.python_tag = 'py' + get_impl_ver()[0]
         self.build_number = None
         self.py_limited_api = False
@@ -109,6 +128,11 @@ class bdist_wheel(Command):
 
         self.data_dir = self.wheel_dist_name + '.data'
         self.plat_name_supplied = self.plat_name is not None
+
+        try:
+            self.compression = self.supported_compressions[self.compression]
+        except KeyError:
+            raise ValueError('Unsupported compression: {}'.format(self.compression))
 
         need_options = ('dist_dir', 'plat_name', 'skip_build')
 
@@ -150,9 +174,15 @@ class bdist_wheel(Command):
         elif self.root_is_pure:
             plat_name = 'any'
         else:
-            plat_name = self.plat_name or get_platform()
+            # macosx contains system version in platform name so need special handle
+            if self.plat_name and not self.plat_name.startswith("macosx"):
+                plat_name = self.plat_name
+            else:
+                plat_name = get_platform(self.bdist_dir)
+
             if plat_name in ('linux-x86_64', 'linux_x86_64') and sys.maxsize == 2147483647:
                 plat_name = 'linux_i686'
+
         plat_name = plat_name.replace('-', '_').replace('.', '_')
 
         if self.root_is_pure:
@@ -173,6 +203,7 @@ class bdist_wheel(Command):
                 abi_tag = str(get_abi_tag()).lower()
             tag = (impl, abi_tag, plat_name)
             supported_tags = pep425tags.get_supported(
+                self.bdist_dir,
                 supplied_platform=plat_name if self.plat_name_supplied else None)
             # XXX switch to this alternate implementation for non-pure:
             if not self.py_limited_api:
@@ -250,7 +281,7 @@ class bdist_wheel(Command):
             os.makedirs(self.dist_dir)
 
         wheel_path = os.path.join(self.dist_dir, archive_basename + '.whl')
-        with WheelFile(wheel_path, 'w') as wf:
+        with WheelFile(wheel_path, 'w', self.compression) as wf:
             wf.write_files(archive_root)
 
         # Add to 'Distribution.dist_files' so that the "upload" command works
@@ -260,7 +291,7 @@ class bdist_wheel(Command):
         if not self.keep_temp:
             logger.info('removing %s', self.bdist_dir)
             if not self.dry_run:
-                rmtree(self.bdist_dir)
+                rmtree(self.bdist_dir, onerror=remove_readonly)
 
     def write_wheelfile(self, wheelfile_base, generator='bdist_wheel (' + wheel_version + ')'):
         from email.message import Message

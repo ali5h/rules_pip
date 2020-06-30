@@ -15,8 +15,8 @@
 import os
 import unittest
 
-from mock import patch
 import pkginfo
+from mock import patch
 
 from src import whl
 
@@ -46,23 +46,23 @@ class WheelTest(unittest.TestCase):
         )
         self.assertEqual(set(whl.dependencies(td)), set())
 
-    @patch("platform.python_version", return_value="2.7.13")
+    @patch("platform.python_version_tuple", return_value=("2", "7"))
     def test_mock_whl(self, *args):
         td = pkginfo.Wheel(TestData("mock_whl/file/mock-2.0.0-py2.py3-none-any.whl"))
         self.assertEqual(set(whl.dependencies(td)), set(["funcsigs", "pbr", "six"]))
 
-    @patch("platform.python_version", return_value="3.3.0")
+    @patch("platform.python_version_tuple", return_value=("3", "3"))
     def test_mock_whl_3_3(self, *args):
         td = pkginfo.Wheel(TestData("mock_whl/file/mock-2.0.0-py2.py3-none-any.whl"))
         self.assertEqual(set(whl.dependencies(td)), set(["pbr", "six"]))
 
-    @patch("platform.python_version", return_value="2.7.13")
+    @patch("platform.python_version_tuple", return_value=("2", "7"))
     def test_mock_whl_extras(self, *args):
         td = pkginfo.Wheel(TestData("mock_whl/file/mock-2.0.0-py2.py3-none-any.whl"))
         self.assertEqual(set(whl.dependencies(td, extra="docs")), set(["sphinx"]))
         self.assertEqual(set(whl.dependencies(td, extra="test")), set(["unittest2"]))
 
-    @patch("platform.python_version", return_value="3.0.0")
+    @patch("platform.python_version_tuple", return_value=("3", "0"))
     def test_mock_whl_extras_3_0(self, *args):
         td = pkginfo.Wheel(TestData("mock_whl/file/mock-2.0.0-py2.py3-none-any.whl"))
         self.assertEqual(
@@ -71,12 +71,11 @@ class WheelTest(unittest.TestCase):
         )
         self.assertEqual(set(whl.dependencies(td, extra="test")), set(["unittest2"]))
 
-    @patch("platform.python_version", return_value="2.7.13")
+    @patch("platform.python_version_tuple", return_value=("2", "7"))
     def test_google_cloud_language_whl(self, *args):
         td = pkginfo.Wheel(
             TestData(
-                "google_cloud_language_whl/file/"
-                + "google_cloud_language-0.29.0-py2.py3-none-any.whl"
+                "google_cloud_language_whl/file/google_cloud_language-0.29.0-py2.py3-none-any.whl"
             )
         )
         expected_deps = [
@@ -87,12 +86,11 @@ class WheelTest(unittest.TestCase):
         ]
         self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
 
-    @patch("platform.python_version", return_value="3.4.0")
+    @patch("platform.python_version_tuple", return_value=("3", "4"))
     def test_google_cloud_language_whl_3_4(self, *args):
         td = pkginfo.Wheel(
             TestData(
-                "google_cloud_language_whl/file/"
-                + "google_cloud_language-0.29.0-py2.py3-none-any.whl"
+                "google_cloud_language_whl/file/google_cloud_language-0.29.0-py2.py3-none-any.whl"
             )
         )
         expected_deps = [
@@ -102,29 +100,28 @@ class WheelTest(unittest.TestCase):
         ]
         self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
 
-    @patch("platform.python_version", return_value="2.7.13")
+    @patch("platform.python_version_tuple", return_value=("2", "7"))
     def test_pytest_flask_whl(self, *args):
         td = pkginfo.Wheel(
             TestData(
-                "pytest_flask_0_14_0_whl/file/"
-                + "pytest_flask-0.14.0-py2.py3-none-any.whl"
+                "pytest_flask_0_14_0_whl/file/pytest_flask-0.14.0-py2.py3-none-any.whl"
             )
         )
         expected_deps = [
-            'pytest',
-            'Flask',
-            'Werkzeug',
+            "pytest",
+            "Flask",
+            "Werkzeug",
         ]
         self.assertEqual(len(whl.dependencies(td)), len(expected_deps))
         self.assertEqual(set(whl.dependencies(td)), set(expected_deps))
 
     def test_ruamel_yaml_clib_whl(self):
         td = pkginfo.Wheel(
-            TestData("ruamel_yaml_clib_0_2_0_whl/file/ruamel.yaml.clib-0.2.0-cp27-cp27m-manylinux1_x86_64.whl")
+            TestData(
+                "ruamel_yaml_clib_0_2_0_whl/file/ruamel.yaml.clib-0.2.0-cp27-cp27m-manylinux1_x86_64.whl"
+            )
         )
-        self.assertEqual(
-            set(whl.dependencies(td)), set([])
-        )
+        self.assertEqual(set(whl.dependencies(td)), set([]))
 
 
 if __name__ == "__main__":
