@@ -46,16 +46,17 @@ __all__ = [
 _SOCKET_TIMEOUT = 15
 
 _tmpl = "setuptools/{setuptools.__version__} Python-urllib/{py_major}"
-user_agent = _tmpl.format(py_major='{}.{}'.format(*sys.version_info), setuptools=setuptools)
+user_agent = _tmpl.format(
+    py_major='{}.{}'.format(*sys.version_info), setuptools=setuptools)
 
 
 def parse_requirement_arg(spec):
     try:
         return Requirement.parse(spec)
-    except ValueError:
+    except ValueError as e:
         raise DistutilsError(
             "Not a URL, existing file, or requirement spec: %r" % (spec,)
-        )
+        ) from e
 
 
 def parse_bdist_wininst(name):
@@ -348,6 +349,8 @@ class PackageIndex(Environment):
         f = self.open_url(url, tmpl % url)
         if f is None:
             return
+        if isinstance(f, urllib.error.HTTPError) and f.code == 401:
+            self.info("Authentication error: %s" % f.msg)
         self.fetched_urls[f.url] = True
         if 'html' not in f.headers.get('content-type', '').lower():
             f.close()  # not html, we can't process it
@@ -769,7 +772,7 @@ class PackageIndex(Environment):
             if warning:
                 self.warn(warning, msg)
             else:
-                raise DistutilsError('%s %s' % (url, msg))
+                raise DistutilsError('%s %s' % (url, msg)) from v
         except urllib.error.HTTPError as v:
             return v
         except urllib.error.URLError as v:
@@ -777,7 +780,7 @@ class PackageIndex(Environment):
                 self.warn(warning, v.reason)
             else:
                 raise DistutilsError("Download error for %s: %s"
-                                     % (url, v.reason))
+                                     % (url, v.reason)) from v
         except http_client.BadStatusLine as v:
             if warning:
                 self.warn(warning, v.line)
@@ -786,13 +789,13 @@ class PackageIndex(Environment):
                     '%s returned a bad status line. The server might be '
                     'down, %s' %
                     (url, v.line)
-                )
+                ) from v
         except (http_client.HTTPException, socket.error) as v:
             if warning:
                 self.warn(warning, v)
             else:
                 raise DistutilsError("Download error for %s: %s"
-                                     % (url, v))
+                                     % (url, v)) from v
 
     def _download_url(self, scheme, url, tmpdir):
         # Determine download filename
@@ -1050,7 +1053,7 @@ def open_with_auth(url, opener=urllib.request.urlopen):
     parsed = urllib.parse.urlparse(url)
     scheme, netloc, path, params, query, frag = parsed
 
-    # Double scheme does not raise on Mac OS X as revealed by a
+    # Double scheme does not raise on macOS as revealed by a
     # failing test. We would expect "nonnumeric port". Refs #20.
     if netloc.endswith(':'):
         raise http_client.InvalidURL("nonnumeric port: ''")
@@ -1092,7 +1095,8 @@ def open_with_auth(url, opener=urllib.request.urlopen):
 
 # copy of urllib.parse._splituser from Python 3.8
 def _splituser(host):
-    """splituser('user[:passwd]@host[:port]') --> 'user[:passwd]', 'host[:port]'."""
+    """splituser('user[:passwd]@host[:port]')
+    --> 'user[:passwd]', 'host[:port]'."""
     user, delim, host = host.rpartition('@')
     return (user if delim else None), host
 

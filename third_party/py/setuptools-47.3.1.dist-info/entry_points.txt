@@ -60,7 +60,6 @@ top_level.txt = setuptools.command.egg_info:write_toplevel_names
 
 [setuptools.finalize_distribution_options]
 2to3_doctests = setuptools.dist:Distribution._finalize_2to3_doctests
-features = setuptools.dist:Distribution._finalize_feature_opts
 keywords = setuptools.dist:Distribution._finalize_setup_keywords
 parent_finalize = setuptools.dist:_Distribution.finalize_options
 

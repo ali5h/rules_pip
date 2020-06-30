@@ -10,8 +10,7 @@ import pkg_resources
 
 from .pkginfo import read_pkg_info
 
-# Wheel itself is probably the only program that uses non-extras markers
-# in METADATA/PKG-INFO. Support its syntax with the extra at the end only.
+# Support markers syntax with the extra at the end only
 EXTRA_RE = re.compile(
     r"""^(?P<package>.*?)(;\s*(?P<condition>.*?)(extra == '(?P<extra>.*?)')?)$""")
 
@@ -102,8 +101,6 @@ def pkginfo_unicode(pkg_info, field):
     text = pkg_info[field]
     field = field.lower()
     if not isinstance(text, str):
-        if not hasattr(pkg_info, 'raw_items'):  # Python 3.2
-            return str(text)
         for item in pkg_info.raw_items():
             if item[0].lower() == field:
                 text = item[1].encode('ascii', 'surrogateescape') \
