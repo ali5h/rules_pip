@@ -1,7 +1,4 @@
 import distutils.command.bdist_wininst as orig
-import warnings
-
-from setuptools import SetuptoolsDeprecationWarning
 
 
 class bdist_wininst(orig.bdist_wininst):
@@ -17,12 +14,6 @@ class bdist_wininst(orig.bdist_wininst):
         return cmd
 
     def run(self):
-        warnings.warn(
-            "bdist_wininst is deprecated and will be removed in a future "
-            "version. Use bdist_wheel (wheel packages) instead.",
-            SetuptoolsDeprecationWarning
-        )
-
         self._is_running = True
         try:
             orig.bdist_wininst.run(self)

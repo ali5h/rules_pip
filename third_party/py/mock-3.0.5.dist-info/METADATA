@@ -1,11 +1,11 @@
 Metadata-Version: 2.1
 Name: mock
-Version: 4.0.2
+Version: 3.0.5
 Summary: Rolling backport of unittest.mock for all Pythons
 Home-page: http://mock.readthedocs.org/en/latest/
 Author: Testing Cabal
 Author-email: testing-in-python@lists.idyll.org
-License: UNKNOWN
+License: OSI Approved :: BSD License
 Platform: UNKNOWN
 Classifier: Development Status :: 5 - Production/Stable
 Classifier: Environment :: Console
@@ -13,15 +13,21 @@ Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: BSD License
 Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
-Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: Implementation :: CPython
 Classifier: Programming Language :: Python :: Implementation :: PyPy
 Classifier: Topic :: Software Development :: Libraries
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Classifier: Topic :: Software Development :: Testing
-Requires-Python: >=3.6
+Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
+Requires-Dist: six
+Requires-Dist: funcsigs (>=1) ; python_version < "3.3"
 Provides-Extra: build
 Requires-Dist: twine ; extra == 'build'
 Requires-Dist: wheel ; extra == 'build'
@@ -41,7 +47,7 @@ mock is now part of the Python standard library, available as `unittest.mock
 onwards.
 
 This package contains a rolling backport of the standard library mock code
-compatible with Python 3.6 and up.
+compatible with Python 2.7 and 3.4 and up.
 
 Please see the standard library documentation for more details.
 

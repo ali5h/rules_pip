@@ -27,8 +27,12 @@ WHEEL_NAME = re.compile(
     )\.whl$""",
     re.VERBOSE).match
 
-NAMESPACE_PACKAGE_INIT = \
-    "__import__('pkg_resources').declare_namespace(__name__)\n"
+NAMESPACE_PACKAGE_INIT = '''\
+try:
+    __import__('pkg_resources').declare_namespace(__name__)
+except ImportError:
+    __path__ = __import__('pkgutil').extend_path(__path__, __name__)
+'''
 
 
 def unpack(src_dir, dst_dir):
@@ -73,8 +77,7 @@ class Wheel:
 
     def is_compatible(self):
         '''Is the wheel is compatible with the current platform?'''
-        supported_tags = set(
-            (t.interpreter, t.abi, t.platform) for t in sys_tags())
+        supported_tags = set((t.interpreter, t.abi, t.platform) for t in sys_tags())
         return next((True for t in self.tags() if t in supported_tags), False)
 
     def egg_name(self):

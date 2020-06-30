@@ -38,24 +38,22 @@ def __boot():
     else:
         raise ImportError("Couldn't find the real 'site' module")
 
-    # 2.2 comp
-    known_paths = dict([(
-        makepath(item)[1], 1) for item in sys.path])  # noqa
+    known_paths = dict([(makepath(item)[1], 1) for item in sys.path])  # 2.2 comp
 
     oldpos = getattr(sys, '__egginsert', 0)  # save old insertion position
     sys.__egginsert = 0  # and reset the current one
 
     for item in PYTHONPATH:
-        addsitedir(item)  # noqa
+        addsitedir(item)
 
     sys.__egginsert += oldpos  # restore effective old position
 
-    d, nd = makepath(stdpath[0])  # noqa
+    d, nd = makepath(stdpath[0])
     insert_at = None
     new_path = []
 
     for item in sys.path:
-        p, np = makepath(item)  # noqa
+        p, np = makepath(item)
 
         if np == nd and insert_at is None:
             # We've hit the first 'system' path entry, so added entries go here

@@ -17,18 +17,9 @@ C_BUILTIN = 6
 PY_FROZEN = 7
 
 
-def find_spec(module, paths):
-    finder = (
-        importlib.machinery.PathFinder().find_spec
-        if isinstance(paths, list) else
-        importlib.util.find_spec
-    )
-    return finder(module, paths)
-
-
 def find_module(module, paths=None):
     """Just like 'imp.find_module()', but with package support"""
-    spec = find_spec(module, paths)
+    spec = importlib.util.find_spec(module, paths)
     if spec is None:
         raise ImportError("Can't find %s" % module)
     if not spec.has_location and hasattr(spec, 'submodule_search_locations'):
@@ -69,14 +60,14 @@ def find_module(module, paths=None):
 
 
 def get_frozen_object(module, paths=None):
-    spec = find_spec(module, paths)
+    spec = importlib.util.find_spec(module, paths)
     if not spec:
         raise ImportError("Can't find %s" % module)
     return spec.loader.get_code(module)
 
 
 def get_module(module, paths, info):
-    spec = find_spec(module, paths)
+    spec = importlib.util.find_spec(module, paths)
     if not spec:
         raise ImportError("Can't find %s" % module)
     return module_from_spec(spec)
