@@ -15,8 +15,8 @@ def clean_name(name):
 
 def is_pinned_requirement(req, editable):
     """
-    Returns whether an InstallRequirement is a "pinned" requirement.
-    An InstallRequirement is considered pinned if:
+    Returns whether a Requirement is a "pinned" requirement.
+    A Requirement is considered pinned if:
     - Is not editable
     - It has exactly one specifier
     - That specifier is "=="
@@ -40,7 +40,7 @@ def is_pinned_requirement(req, editable):
 def as_tuple(preq):
     """
     Pulls out the (name: str, version:str, extras:(str)) tuple from
-    the pinned InstallRequirement.
+    the pinned ParsedRequirement.
     """
     req = Requirement(preq.requirement)
     if not is_pinned_requirement(req, preq.is_editable):
