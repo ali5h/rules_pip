@@ -44,7 +44,12 @@ def as_tuple(preq):
     """
     req = Requirement(preq.requirement)
     if not is_pinned_requirement(req, preq.is_editable):
-        raise TypeError("Expected a pinned requirement, got {}".format(req))
+        raise TypeError(
+            (
+                "Expected a pinned requirement, got {}, "
+                "either pre-compile the requirements, or set compile=True in pip_import"
+            ).format(req)
+        )
 
     name = req.name
     version = next(iter(req.specifier._specs))._spec[1]

@@ -22,11 +22,21 @@ is similar to `rules_python`.
   version has its own requirements file and the python binary of that
   version exists in the global environment.
 
-__NOTE__: For full hermetic builds always use a requirements files
-  that is produced by `pip-compile`. In that case, you can disable
-  internal call to `pip-compile` by passing `compile = False` to
-  `pip_import` rule. Also pre-build the wheels in advance.
+### requirements file
+For full hermetic builds always use a requirements files
+that is produced by `pip-compile`. Also pre-build the wheels in advance.
+You can run `pip-compile` as:
 
+  ```
+  $ pip-compile --allow-unsafe requirements.in
+  ```
+
+`--allow-unsafe` is important. For example some packages need
+`setuptools` and we need it to be in requirements file.
+
+Otherwise, you can set `compile=True` in `pip_import` rule and the
+rule will try to compile the requirements file. But this process is
+fragile.
 
 ## Setup
 
@@ -54,8 +64,8 @@ pip_import(
    # or specify a python runtime label
    # python_runtime="@python3_x86_64//:bin/python3",
 
-   # set compile to false only if requirements files is already compiled
-   # compile = False
+   # set compile to true only if requirements files is not already compiled
+   # compile = True
 )
 
 load("@pip_deps//:requirements.bzl", "pip_install")
