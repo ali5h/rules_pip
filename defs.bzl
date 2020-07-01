@@ -2,11 +2,11 @@
 
 pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/easy_install.py")
 
-def _execute(repository_ctx, arguments):
+def _execute(repository_ctx, arguments, quiet = False):
     pip_vendor = str(repository_ctx.path(pip_vendor_label).dirname)
     return repository_ctx.execute(arguments, environment = {
         "PYTHONPATH": pip_vendor,
-    }, timeout = repository_ctx.attr.timeout, quiet = False)
+    }, timeout = repository_ctx.attr.timeout, quiet = quiet)
 
 def _pip_import_impl(repository_ctx):
     """Core implementation of pip_import."""
@@ -24,6 +24,7 @@ def _pip_import_impl(repository_ctx):
         result = _execute(repository_ctx, [
             python_interpreter,
             repository_ctx.path(repository_ctx.attr._compiler),
+            "--quiet",
             "--allow-unsafe",
             "--no-emit-trusted-host",
             "--build-isolation",
@@ -67,7 +68,7 @@ The label to the Python run-time interpreted used to invoke pip and unpack the w
 If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "compile": attr.bool(
-            default = True,
+            default = False,
         ),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
         "_script": attr.label(
