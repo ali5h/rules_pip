@@ -71,3 +71,33 @@ pip_import(
 load("@pip_deps//:requirements.bzl", "pip_install")
 pip_install([<optional pip install args])
 ```
+
+## Target dependencies
+
+To use pip packages you can
+
+* add dependencies via `requirement` macro as
+
+```python
+load("@pip_deps//:requirements.bzl", "requirement")
+
+py_binary(
+    name = "main",
+    srcs = ["main.py"],
+    deps = [
+        requirement("pip-module")
+    ]
+)
+```
+
+* use package aliases as
+
+```python
+py_binary(
+    name = "main",
+    srcs = ["main.py"],
+    deps = [
+        "@pip_deps//:pip-module"
+    ]
+)
+```
