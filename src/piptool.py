@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import re
 import sys
 
@@ -7,6 +8,10 @@ from pip._internal.network.session import PipSession
 from pip._internal.req.req_file import parse_requirements
 from pip._vendor.packaging.requirements import Requirement
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    OrderedDict = dict
 
 def clean_name(name):
     # Escape any illegal characters with underscore.
@@ -142,22 +147,16 @@ def main():
 
     reqs = sorted(get_requirements(args.input), key=as_tuple)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
-    whl_targets = []
+    whl_targets = OrderedDict()
     whl_libraries = []
     for req in reqs:
         name, version, extras = as_tuple(req)
         repo_name = repository_name(name, version, python_version)
-        whl_targets.append(
-            ",".join(
-                ['"%s": "@%s//:pkg"' % (name.lower(), repo_name)]
-                + [
-                    # For every extra that is possible from this requirements.txt
-                    '"%s[%s]": "@%s//:%s"'
-                    % (name.lower(), extra.lower(), repo_name, extra)
-                    for extra in extras
-                ]
-            )
-        )
+        whl_targets["%s" % name] = "@%s//:pkg" % repo_name
+        # For every extra that is possible from this requirements.txt
+        for extra in extras:
+            whl_targets["%s[%s]" % (name, extra)] = "@%s//:%s" % (repo_name, extra)
+
         whl_libraries.append(
             whl_library(
                 name, extras, repo_name, args.name, sys.executable, args.timeout
@@ -190,7 +189,26 @@ def requirement(name, target=None):
     req = pkg + target
   return req
 """.format(
-                whl_libraries="\n".join(whl_libraries), mappings=",".join(whl_targets)
+                whl_libraries="\n".join(whl_libraries),
+                mappings=",".join(
+                    (
+                        '"%s": "%s"' % (name.lower(), whl_targets[name])
+                        for name in whl_targets
+                    )
+                ),
+            )
+        )
+
+    with open(os.path.join(os.path.dirname(args.output), "BUILD"), "w") as _f:
+        _f.write(
+            """# Generated BUILD file
+[alias(name=name, actual=pkg,  visibility=["//visibility:public"]) for name, pkg in {{
+  {mappings}
+}}.items()]
+""".format(
+                mappings=",\n  ".join(
+                    '"%s": "%s"' % (name, whl_targets[name]) for name in whl_targets
+                )
             )
         )
 

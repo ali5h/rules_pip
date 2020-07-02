@@ -17,7 +17,8 @@ py_pytest_test(
         # to test metadata parsing
         requirement("python-dateutil"),
         requirement("xgboost"),
-        requirement("numpy"),
+        # to test package alias
+        "@piptool_deps_tests_3//:numpy",
     ],
 )
 
