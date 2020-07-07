@@ -62,18 +62,19 @@ def as_tuple(preq):
     return name, version, extras
 
 
-def repository_name(name, version, python_version):
+def repository_name(repo_prefix, name, version, python_version):
     """Returns the canonical name of the Bazel repository for a package.
 
-    :param name: package nane
-    :param version: package verion
+    :param repo_prefix: prefix to attach to the repo
+    :param name: package name
+    :param version: package version
     :param python_version: python major version
     :returns: repo name
     :rtype: str
 
     """
-    canonical = "pypi__{}__{}_{}".format(python_version, name, version)
-    return clean_name(canonical)
+    canonical = "__{}__{}_{}".format(python_version, name, version)
+    return "{}{}".format(repo_prefix, clean_name(canonical))
 
 
 def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, timeout):
@@ -141,6 +142,13 @@ def main():
         required=True,
     )
     parser.add_argument(
+        "--repo-prefix",
+        action="store",
+        help=("The prefix to add to the repository name for bazel."),
+        type=str,
+        required=True,
+    )
+    parser.add_argument(
         "--timeout", help=("Timeout used for pip actions."), type=int, required=True,
     )
     args = parser.parse_args()
@@ -151,7 +159,7 @@ def main():
     whl_libraries = []
     for req in reqs:
         name, version, extras = as_tuple(req)
-        repo_name = repository_name(name, version, python_version)
+        repo_name = repository_name(args.repo_prefix, name, version, python_version)
         whl_targets["%s" % name] = "@%s//:pkg" % repo_name
         # For every extra that is possible from this requirements.txt
         for extra in extras:

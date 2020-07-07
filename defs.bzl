@@ -48,6 +48,8 @@ def _pip_import_impl(repository_ctx):
         repository_ctx.path("requirements.bzl"),
         "--timeout",
         str(repository_ctx.attr.timeout),
+        "--repo-prefix",
+        str(repository_ctx.attr.repo_prefix),
     ])
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
@@ -66,6 +68,9 @@ wheels.
         "python_runtime": attr.label(doc = """
 The label to the Python run-time interpreted used to invoke pip and unpack the wheels.
 If the label is specified it will overwrite the python_interpreter attribute.
+"""),
+        "repo_prefix": attr.string(default = "pypi", doc = """
+The prefix for the bazel repository name.
 """),
         "compile": attr.bool(
             default = False,
