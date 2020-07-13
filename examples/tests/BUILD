@@ -22,11 +22,31 @@ py_pytest_test(
     ],
 )
 
+py_pytest_test(
+    name = "test_extra_import",
+    srcs = ["test_extra_import.py"],
+    python_version = "PY3",
+    deps = [
+        ":_test_extra",
+        requirement("pytest"),
+        requirement("numpy"),
+    ],
+)
+
 # using numpy headers target
 py_extension(
     name = "_test",
     srcs = ["test_numpy.c"],
     deps = [
         requirement("numpy", "//:headers"),
+    ],
+)
+
+# using extra build files
+py_extension(
+    name = "_test_extra",
+    srcs = ["test_numpy.c"],
+    deps = [
+        "@piptool_deps_tests_3//:numpy_custom_headers",
     ],
 )

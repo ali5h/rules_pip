@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import sys
+import json
 
 from pip._internal.network.session import PipSession
 from pip._internal.req.req_file import parse_requirements
@@ -77,7 +78,7 @@ def repository_name(repo_prefix, name, version, python_version):
     return "{}{}".format(repo_prefix, clean_name(canonical))
 
 
-def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, timeout):
+def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, timeout, extra_build_file):
     """FIXME! briefly describe function
 
     :param name: package nane
@@ -86,6 +87,7 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, time
     :param pip_repo_name: pip_import repo
     :param python_interpreter:
     :param timeout: timeout for pip actions
+    :param extra_build_file: Optional[str] extra contents to be appended to BUILD
     :returns: whl_library rule definition
     :rtype: str
 
@@ -101,6 +103,7 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, time
         extras = [{extras}],
         pip_args = pip_args,
         timeout = {timeout},
+        {extra_build_file}
     )""".format(
         name=name,
         repo_name=repo_name,
@@ -108,6 +111,7 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, time
         python_interpreter=python_interpreter,
         extras=",".join(['"%s"' % extra for extra in extras]),
         timeout=timeout,
+        extra_build_file="extra_build_file=Label(\"%s\")," % extra_build_file if extra_build_file else "",
     )
 
 
@@ -149,10 +153,19 @@ def main():
         required=True,
     )
     parser.add_argument(
+        "--extra-build-info",
+        action="store",
+        help=("Json encoded extra build files required and their declared targets."),
+        type=str,
+        default = "{}",
+    )
+    parser.add_argument(
         "--timeout", help=("Timeout used for pip actions."), type=int, required=True,
     )
     args = parser.parse_args()
-
+    extra_build_info = json.loads(args.extra_build_info)
+    extra_build_files = extra_build_info.get("build_files", {})
+    extra_build_targets = extra_build_info.get("build_targets", {})
     reqs = sorted(get_requirements(args.input), key=as_tuple)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = OrderedDict()
@@ -164,10 +177,11 @@ def main():
         # For every extra that is possible from this requirements.txt
         for extra in extras:
             whl_targets["%s[%s]" % (name, extra)] = "@%s//:%s" % (repo_name, extra)
-
+        for target in extra_build_targets.get(name, []):
+            whl_targets["%s_%s" % (name, target)] = "@%s//:%s" % (repo_name, target)
         whl_libraries.append(
             whl_library(
-                name, extras, repo_name, args.name, sys.executable, args.timeout
+                name, extras, repo_name, args.name, sys.executable, args.timeout, extra_build_files.get(name)
             )
         )
 

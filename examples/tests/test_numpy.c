@@ -15,3 +15,8 @@ PyMODINIT_FUNC PyInit__test(void) {
   import_array();
   return PyModule_Create(&moduledef);
 }
+
+PyMODINIT_FUNC PyInit__test_extra(void) {
+  import_array();
+  return PyModule_Create(&moduledef);
+}

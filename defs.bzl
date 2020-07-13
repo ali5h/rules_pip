@@ -37,7 +37,7 @@ def _pip_import_impl(repository_ctx):
         if result.return_code:
             fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
 
-    result = _execute(repository_ctx, [
+    args = [
         python_interpreter,
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
@@ -50,7 +50,26 @@ def _pip_import_impl(repository_ctx):
         str(repository_ctx.attr.timeout),
         "--repo-prefix",
         str(repository_ctx.attr.repo_prefix),
-    ])
+    ]
+
+    extra_build_info_json = \
+        struct(
+            build_files = repository_ctx.attr.extra_build_files,
+            build_targets = repository_ctx.attr.extra_build_targets,
+        ).to_json() if repository_ctx.attr.extra_build_files else None
+
+    if extra_build_info_json:
+        args.extend(
+            [
+                "--extra-build-info",
+                str(extra_build_info_json),
+            ],
+        )
+
+    result = _execute(
+        repository_ctx,
+        args,
+    )
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
 
@@ -71,6 +90,15 @@ If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "repo_prefix": attr.string(default = "pypi", doc = """
 The prefix for the bazel repository name.
+"""),
+        "extra_build_files": attr.string_dict(default = {}, doc = """
+Additional targets to add to the BUILD files for a repository. The dictionary
+is a string->Label mapping that maps a dependency to additional build file content.
+"""),
+        "extra_build_targets": attr.string_list_dict(default = {}, doc = """
+Additional targets that the extra build file declares. Adding this creates an alias for
+them to be used conviniently. The standard form is {package_name}_{target_name}. The dictionary
+is a string->List[string] mapping where the list is the list of targets.
 """),
         "compile": attr.bool(
             default = False,
@@ -117,6 +145,12 @@ def _whl_impl(repository_ctx):
         "--package",
         repository_ctx.attr.pkg,
     ]
+
+    if repository_ctx.attr.extra_build_file:
+        args += [
+            "--extra-build-file",
+            repository_ctx.path(repository_ctx.attr.extra_build_file),
+        ]
     if repository_ctx.attr.extras:
         args += [
             "--extras=%s" % extra
@@ -143,6 +177,9 @@ If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "pip_args": attr.string_list(default = []),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
+        "extra_build_file": attr.label(doc = """"
+Label to extra build file whose contents will be appended to the generated BUILD.
+"""),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),

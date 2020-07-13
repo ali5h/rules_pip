@@ -164,6 +164,22 @@ cc_library(
     )
 
 
+def get_extra_build_file_content(build_file):
+    """
+    Gets the string contents from the build file
+    :param build_file: Optional[str]
+    :return str: the contents read from the file. Empty otherwise.
+    """
+    # Early exit
+    if not build_file:
+        return ""
+    # Pass up all IO errors. We want to have a non zero exit code that would be caught by Bazel.
+    # FileNotFound error shouldn't happen normally cause we are passing a Label in the argument
+    # to this script using attr.Label which should always resolve to an existing path.
+    with open(build_file, 'r') as f:
+        return f.read()
+
+
 def main():
     logging.basicConfig()
     parser = argparse.ArgumentParser(
@@ -193,10 +209,17 @@ def main():
         action="append",
         help="The set of extras for which to generate library targets.",
     )
+    parser.add_argument(
+        "--extra-build-file",
+        action="store",
+        help="Path to the extra build file whose contents should be appended to generated BUILD.",
+    )
 
     args, pip_args = parser.parse_known_args()
 
     pip_args += ["-c", args.constraint]
+
+    extra_build_file_content = get_extra_build_file_content(args.extra_build_file)
 
     configure_reproducible_wheels()
 
@@ -245,10 +268,12 @@ py_library(
         {dependencies}
     ],
 )
-{extras}""".format(
+{extras}
+{extra_build_file_content}""".format(
         requirements=args.requirements,
         dependencies=",".join(['requirement("%s")' % d for d in dependencies(pkg)]),
         extras=extras,
+        extra_build_file_content=extra_build_file_content,
     )
 
     # clean up

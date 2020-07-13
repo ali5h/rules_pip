@@ -66,6 +66,16 @@ pip_import(
 
    # set compile to true only if requirements files is not already compiled
    # compile = True
+
+   # add extra build files to be added to extend the `rules_pip`.
+   # the content of the BUILD file is extended by appending the
+   # the content from the supplied file to the generated file for a pip
+   # pacakage.
+   # extra_build_files = {"tensorflow": "@//:src/tensorflow.BUILD"},
+
+   # add aliases for the extra targets defined in the build file above.
+   # The format for access via alias is {package}_{target}
+   # extra_build_targets = {"tensorflow": ["headers"]},
 )
 
 load("@pip_deps//:requirements.bzl", "pip_install")
@@ -85,7 +95,8 @@ py_binary(
     name = "main",
     srcs = ["main.py"],
     deps = [
-        requirement("pip-module")
+        requirement("pip-module"),
+        requirement("tensorflow", target="//:headers"),
     ]
 )
 ```
@@ -98,6 +109,7 @@ py_binary(
     srcs = ["main.py"],
     deps = [
         "@pip_deps//:pip-module"
+        "@pip_deps//:tensorflow_headers"
     ]
 )
 ```

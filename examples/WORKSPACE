@@ -49,10 +49,16 @@ local_repository(
 
 load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
 
+EXTRA_TARGETS = {
+    "numpy": ["custom_headers"],
+}
+
 pip_import(
     name = "piptool_deps_tests_3",
     timeout = 1200,
     compile = False,
+    extra_build_files = {k: "@//tests:{}.BUILD".format(k) for k in EXTRA_TARGETS},
+    extra_build_targets = EXTRA_TARGETS,
     python_interpreter = "python3.7",
     requirements = "//tests:requirements.txt",
 )
