@@ -43,7 +43,7 @@ fragile.
 Add the following to your `WORKSPACE` file:
 
 ```python
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "com_github_ali5h_rules_pip",
