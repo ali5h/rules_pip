@@ -52,17 +52,16 @@ def _pip_import_impl(repository_ctx):
         str(repository_ctx.attr.repo_prefix),
     ]
 
-    extra_build_info_json = \
-        struct(
-            build_files = repository_ctx.attr.extra_build_files,
-            build_targets = repository_ctx.attr.extra_build_targets,
-        ).to_json() if repository_ctx.attr.extra_build_files else None
-
-    if extra_build_info_json:
+    if repository_ctx.attr.extra_build_files:
         args.extend(
             [
                 "--extra-build-info",
-                str(extra_build_info_json),
+                str(
+                    struct(
+                        build_files = repository_ctx.attr.extra_build_files,
+                        build_targets = repository_ctx.attr.extra_build_targets,
+                    ).to_json(),
+                ),
             ],
         )
 
