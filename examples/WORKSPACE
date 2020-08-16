@@ -53,7 +53,7 @@ pip_import(
     name = "piptool_deps_tests_3",
     timeout = 1200,
     compile = False,
-    python_interpreter = "python3.7",
+    python_interpreter = "python3.8",
     requirements = "//tests:requirements.txt",
 )
 
@@ -73,9 +73,9 @@ pip_install([
 load("@com_github_ali5h_rules_pip//third_party/cpython:configure.bzl", "python_configure")
 
 python_configure(
-    name = "cpython37",
+    name = "cpython",
     devel = True,
-    interpreter = "python3.7",
+    interpreter = "python3.8",
 )
 
 # added at the end to not override rules_docker

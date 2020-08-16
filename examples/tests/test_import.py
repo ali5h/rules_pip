@@ -3,9 +3,12 @@ def test_import():
     import google.cloud.language
     import azure.storage.blob
     import dateutil
+    import prometheus_client
+
 
 def test_xgboost():
     import xgboost.training
+
 
 def test_numpy():
     import numpy

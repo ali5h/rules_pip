@@ -1,2 +1,2 @@
 #!/bin/bash
-exec python3.7 "$@"
+exec python3.8 "$@"

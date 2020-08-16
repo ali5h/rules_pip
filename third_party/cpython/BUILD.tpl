@@ -4,10 +4,10 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "lib",
-    hdrs = glob(["include/*.h"]),
     srcs = glob([
         "lib/*.a",
         "lib/*.so",
     ]),
+    hdrs = glob(["include/**/*.h"]),
     includes = ["include"],
 )

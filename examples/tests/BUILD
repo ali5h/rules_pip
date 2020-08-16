@@ -2,7 +2,7 @@
 
 load("@com_github_ali5h_rules_pip//:defs.bzl", "py_pytest_test")
 load("@piptool_deps_tests_3//:requirements.bzl", "requirement")
-load("@cpython37//:defs.bzl", "py_extension")
+load("@cpython//:defs.bzl", "py_extension")
 
 # run the test using pytest
 py_pytest_test(
@@ -17,6 +17,7 @@ py_pytest_test(
         # to test metadata parsing
         requirement("python-dateutil"),
         requirement("xgboost"),
+        requirement("prometheus-client"),
         # to test package alias
         "@piptool_deps_tests_3//:numpy",
     ],

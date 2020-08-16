@@ -9,3 +9,4 @@ azure-storage-blob
 python_dateutil
 
 xgboost
+prometheus_client
