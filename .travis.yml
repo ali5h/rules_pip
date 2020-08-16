@@ -3,7 +3,7 @@ dist: bionic
 language:
   - python
 python:
-  - "3.7"
+  - "3.8"
 addons:
   apt:
     update: true
@@ -12,7 +12,7 @@ addons:
         key_url: "https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg"
     packages:
       - bazel
-      - python3.7-dev
+      - python3.8-dev
 
 install:
   - curl -LJO https://github.com/bazelbuild/buildtools/releases/download/2.2.1/buildifier
