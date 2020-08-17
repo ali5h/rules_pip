@@ -1,0 +1,50 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          architecture: x64
+
+      - name: Install tools
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/bin/"
+          python --version
+          curl -Lo "${GITHUB_WORKSPACE}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64"
+          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+          curl -Lo "${GITHUB_WORKSPACE}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/3.5.0/buildifier"
+          chmod +x "${GITHUB_WORKSPACE}/bin/buildifier"
+          pip install black==20.8b1
+          pip uninstall -y pip setuptools wheels
+
+      - name: Style
+        run: |
+          "${GITHUB_WORKSPACE}/bin/buildifier" -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
+          black --check --exclude 'third_party' .
+
+      - name: Test Rules
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" info
+          "${GITHUB_WORKSPACE}/bin/bazel" build //...
+          "${GITHUB_WORKSPACE}/bin/bazel" test //...
+
+      - name: Test Examples
+        run: |
+          cd examples
+          "${GITHUB_WORKSPACE}/bin/bazel" info
+          "${GITHUB_WORKSPACE}/bin/bazel" build //...
+          "${GITHUB_WORKSPACE}/bin/bazel" test //...
