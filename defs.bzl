@@ -33,7 +33,7 @@ def _pip_import_impl(repository_ctx):
             "--no-index",
             "--no-annotate",
             repository_ctx.path("requirements.txt"),
-        ])
+        ], quiet = repository_ctx.attr.quiet)
         if result.return_code:
             fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
 
@@ -50,7 +50,9 @@ def _pip_import_impl(repository_ctx):
         str(repository_ctx.attr.timeout),
         "--repo-prefix",
         str(repository_ctx.attr.repo_prefix),
-    ])
+        "--quiet",
+        str(repository_ctx.attr.quiet),
+    ], quiet = repository_ctx.attr.quiet)
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
 
@@ -88,6 +90,10 @@ The prefix for the bazel repository name.
             allow_single_file = True,
             cfg = "host",
         ),
+        "quiet": attr.bool(
+            default = True,
+            doc = "If stdout and stderr should be printed to the terminal.",
+        ),
     },
     implementation = _pip_import_impl,
 )
@@ -124,7 +130,7 @@ def _whl_impl(repository_ctx):
         ]
     args += pip_args
 
-    result = _execute(repository_ctx, args)
+    result = _execute(repository_ctx, args, quiet = repository_ctx.attr.quiet)
     if result.return_code:
         fail("whl_library failed: %s (%s)" % (result.stdout, result.stderr))
 
@@ -148,6 +154,10 @@ If the label is specified it will overwrite the python_interpreter attribute.
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
             cfg = "host",
         ),
+        "quiet": attr.bool(
+            default = True,
+            doc = "If stdout and stderr should be printed to the terminal.",
+        ),
     },
     implementation = _whl_impl,
 )
@@ -162,9 +172,12 @@ def py_pytest_test(
             "no:cacheprovider",
         ],
         **kwargs):
-    """A macro that runs pytest tests by using a test runner
-    :param name: rule name
-    :param kwargs: are passed to py_test, with srcs and deps attrs modified
+    """A macro that runs pytest tests by using a test runner.
+
+    Args:
+        name: A unique name for this rule.
+        pytest_args: a list of arguments passed to pytest
+        **kwargs: are passed to py_test, with srcs and deps attrs modified
     """
 
     if "main" in kwargs:
