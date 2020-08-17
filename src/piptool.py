@@ -13,6 +13,7 @@ try:
 except ImportError:
     OrderedDict = dict
 
+
 def clean_name(name):
     # Escape any illegal characters with underscore.
     return re.sub("[-.+]", "_", name)
@@ -65,30 +66,33 @@ def as_tuple(preq):
 def repository_name(repo_prefix, name, version, python_version):
     """Returns the canonical name of the Bazel repository for a package.
 
-    :param repo_prefix: prefix to attach to the repo
-    :param name: package name
-    :param version: package version
-    :param python_version: python major version
-    :returns: repo name
-    :rtype: str
-
+    Args:
+        repo_prefix: prefix to attach to the repo
+        name: package name
+        version: package version
+        python_version: python major version
+    Returns:
+     str: repo name
     """
     canonical = "__{}__{}_{}".format(python_version, name, version)
     return "{}{}".format(repo_prefix, clean_name(canonical))
 
 
-def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, timeout):
-    """FIXME! briefly describe function
+def whl_library(
+    name, extras, repo_name, pip_repo_name, python_interpreter, timeout, quiet
+):
+    """Generate whl_library snippets for a package and its extras.
 
-    :param name: package nane
-    :param extras: extras for this lib
-    :param repo_name: repo name used for this lib
-    :param pip_repo_name: pip_import repo
-    :param python_interpreter:
-    :param timeout: timeout for pip actions
-    :returns: whl_library rule definition
-    :rtype: str
-
+    Args:
+        name: package nane
+        extras: extras for this lib
+        repo_name: repo name used for this lib
+        pip_repo_name: pip_import repo
+        python_interpreter:
+        timeout: timeout for pip actions
+        quiet: makes command run in quiet mode
+    Returns:
+      str: whl_library rule definition
     """
     # Indentation here matters
     return """
@@ -101,6 +105,7 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, time
         extras = [{extras}],
         pip_args = pip_args,
         timeout = {timeout},
+        quiet = {quiet},
     )""".format(
         name=name,
         repo_name=repo_name,
@@ -108,16 +113,17 @@ def whl_library(name, extras, repo_name, pip_repo_name, python_interpreter, time
         python_interpreter=python_interpreter,
         extras=",".join(['"%s"' % extra for extra in extras]),
         timeout=timeout,
+        quiet=quiet,
     )
 
 
 def get_requirements(requirement):
-    """Parse a requirement file
+    """Parse a requirement file.
 
-    :param requirement: path to requirement file
-    :returns: list of InstallRequirement
-    :rtype: list[InstallRequirements]
-
+    Args:
+        requirement: path to requirement file
+    Returns:
+        list[InstallRequirements]: list of InstallRequirement
     """
     session = PipSession()
     return parse_requirements(requirement, session=session)
@@ -132,24 +138,27 @@ def main():
     parser.add_argument(
         "--input",
         action="store",
-        help=("The requirements.txt file to import."),
+        help="The requirements.txt file to import.",
         required=True,
     )
     parser.add_argument(
         "--output",
         action="store",
-        help=("The requirements.bzl file to export."),
+        help="The requirements.bzl file to export.",
         required=True,
     )
     parser.add_argument(
         "--repo-prefix",
         action="store",
-        help=("The prefix to add to the repository name for bazel."),
+        help="The prefix to add to the repository name for bazel.",
         type=str,
         required=True,
     )
     parser.add_argument(
-        "--timeout", help=("Timeout used for pip actions."), type=int, required=True,
+        "--timeout", help="Timeout used for pip actions.", type=int, required=True,
+    )
+    parser.add_argument(
+        "--quiet", help="Make pip install action quiet.", type=bool, required=True,
     )
     args = parser.parse_args()
 
@@ -167,7 +176,13 @@ def main():
 
         whl_libraries.append(
             whl_library(
-                name, extras, repo_name, args.name, sys.executable, args.timeout
+                name,
+                extras,
+                repo_name,
+                args.name,
+                sys.executable,
+                args.timeout,
+                args.quiet,
             )
         )
 

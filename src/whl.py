@@ -54,13 +54,13 @@ def install_package(pkg, directory, pip_args):
     """Downloads wheel for a package. Assumes python binary provided has
     pip and wheel package installed.
 
-    :param pkg: package name
-    :param directory: destination directory to download the wheel file in
-    :param python: python binary path used to run pip command
-    :param pip_args: extra pip args sent to pip
-    :returns: path to the wheel file
-    :rtype: str
-
+    Args:
+        pkg: package name
+        directory: destination directory to download the wheel file in
+        python: python binary path used to run pip command
+        pip_args: extra pip args sent to pip
+    Returns:
+        str: path to the wheel file
     """
     pip_args = [
         "--isolated",
@@ -102,13 +102,13 @@ def install_package(pkg, directory, pip_args):
 
 
 def dependencies(pkg, extra=None):
-    """find dependencies of a wheel.
+    """Find dependencies of a wheel.
 
-    :param whl_path: path to wheel
-    :param extra: find additional dependencies for the extra instead
-    :returns: list of dependencies
-    :rtype: list
-
+    Args:
+        whl_path: path to wheel
+        extra: find additional dependencies for the extra instead
+    Returns:
+        list: list of dependencies
     """
     ret = set()
     for dist in pkg.requires_dist:
@@ -143,10 +143,10 @@ def _cleanup(directory, pattern):
 def _get_numpy_headers(directory):
     """Generate cc_library rule for numpy headers.
 
-    :param directory: path to numpy package installation root
-    :returns: a cc_library rule
-    :rtype: str
-
+    Args:
+        directory: path to numpy package installation root
+    Returns:
+        str: a cc_library rule
     """
     sys.path.insert(0, directory)
     import numpy

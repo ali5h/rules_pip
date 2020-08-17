@@ -63,11 +63,12 @@ load(
 )
 
 # pip_install acts like pip install command and can accept arguments
-pip_install([
+pip_install(pip_args = [
     "--only-binary",
     ":all",
-    "--platform",
-    "manylinux1_x86_64",
+    # more pip install flags
+    # "--platform",
+    # "manylinux1_x86_64",
 ])
 
 load("@com_github_ali5h_rules_pip//third_party/cpython:configure.bzl", "python_configure")
