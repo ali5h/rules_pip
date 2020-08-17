@@ -17,12 +17,13 @@ addons:
 install:
   - curl -LJO https://github.com/bazelbuild/buildtools/releases/download/2.2.1/buildifier
   - chmod +x buildifier
+  - pip install black
   - pip uninstall -y pip setuptools wheels
 
 script:
-  # Check for issues with the format of our bazel config files.
+  # Check for issues with the format of our bazel and python code.
   - ./buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
-
+  - black --check --exclude 'third_party' .
   # Check that all of our tests pass
   - bazel info
   - bazel clean && bazel test --config=ci //...
