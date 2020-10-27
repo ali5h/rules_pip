@@ -155,10 +155,16 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--timeout", help="Timeout used for pip actions.", type=int, required=True,
+        "--timeout",
+        help="Timeout used for pip actions.",
+        type=int,
+        required=True,
     )
     parser.add_argument(
-        "--quiet", help="Make pip install action quiet.", type=bool, required=True,
+        "--quiet",
+        help="Make pip install action quiet.",
+        type=bool,
+        required=True,
     )
     args = parser.parse_args()
 
