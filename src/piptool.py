@@ -110,7 +110,7 @@ def whl_library(
         name=name,
         repo_name=repo_name,
         pip_repo_name=pip_repo_name,
-        python_interpreter=python_interpreter,
+        python_interpreter=python_interpreter.replace("\\", "/"),
         extras=",".join(['"%s"' % extra for extra in extras]),
         timeout=timeout,
         quiet=quiet,
