@@ -211,7 +211,7 @@ all_requirements = _requirements.values()
 def requirement(name, target=None):
   name_key = name.lower()
   if name_key not in _requirements:
-    fail("Could not find pip-provided dependency: '%s'" % name)
+    return name_key + "_not_found_in_requirements"
   req = _requirements[name_key]
   if target != None:
     pkg, _, _ = req.partition("//")
