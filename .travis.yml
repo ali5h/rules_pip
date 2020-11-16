@@ -7,22 +7,27 @@ python:
 addons:
   apt:
     update: true
-    sources:
-      - sourceline: "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8"
-        key_url: "https://storage.googleapis.com/bazel-apt/doc/apt-key.pub.gpg"
     packages:
-      - bazel
       - python3.8-dev
 
+cache:
+  directories:
+    - $HOME/.cache/bazel
+
+env:
+  - USE_BAZEL_VERSION=3.7.0
+
 install:
-  - curl -LJO https://github.com/bazelbuild/buildtools/releases/download/2.2.1/buildifier
-  - chmod +x buildifier
-  - pip install black
+  - curl -LJo $HOME/bin/buildifier https://github.com/bazelbuild/buildtools/releases/download/3.5.0/buildifier
+  - chmod +x $HOME/bin/buildifier
+  - curl -LJo $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.7.4/bazelisk-linux-amd64
+  - chmod +x $HOME/bin/bazel
+  - pip install black==20.8b1
   - pip uninstall -y pip setuptools wheels
 
 script:
   # Check for issues with the format of our bazel and python code.
-  - ./buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
+  - buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
   - black --check --exclude 'third_party' .
   # Check that all of our tests pass
   - bazel info
