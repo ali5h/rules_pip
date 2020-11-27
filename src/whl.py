@@ -235,7 +235,6 @@ py_library(
         "**/* *",
         "BUILD",
         "WORKSPACE",
-        "bin/*",
         "__pycache__",
     ]),
     # This makes this directory a top-level in the python import
