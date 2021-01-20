@@ -9,6 +9,7 @@ from pip._internal.utils.compat import stdlib_pkgs
 
 from . import click
 from .exceptions import IncompatibleRequirements
+from .logging import log
 from .utils import (
     flat_map,
     format_requirement,
@@ -147,24 +148,18 @@ def diff(compiled_requirements, installed_dists):
     return (to_install, to_uninstall)
 
 
-def sync(
-    to_install,
-    to_uninstall,
-    verbose=False,
-    dry_run=False,
-    install_flags=None,
-    ask=False,
-):
+def sync(to_install, to_uninstall, dry_run=False, install_flags=None, ask=False):
     """
     Install and uninstalls the given sets of modules.
     """
+    exit_code = 0
+
     if not to_uninstall and not to_install:
-        if verbose:
-            click.echo("Everything up-to-date")
-        return 0
+        log.info("Everything up-to-date", err=False)
+        return exit_code
 
     pip_flags = []
-    if not verbose:
+    if log.verbosity < 0:
         pip_flags += ["-q"]
 
     if ask:
@@ -181,8 +176,11 @@ def sync(
             for ireq in sorted(to_install, key=key_from_ireq):
                 click.echo("  {}".format(format_requirement(ireq)))
 
+        exit_code = 1
+
     if ask and click.confirm("Would you like to proceed with these changes?"):
         dry_run = False
+        exit_code = 0
 
     if not dry_run:
         if to_uninstall:
@@ -215,4 +213,4 @@ def sync(
             finally:
                 os.unlink(tmp_req_file.name)
 
-    return 0
+    return exit_code

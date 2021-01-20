@@ -14,11 +14,7 @@ import setuptools
 from pkg_resources import parse_version
 from setuptools.extern.packaging.tags import sys_tags
 from setuptools.extern.packaging.utils import canonicalize_name
-from setuptools.extern.six import PY3
 from setuptools.command.egg_info import write_requirements
-
-
-__metaclass__ = type
 
 
 WHEEL_NAME = re.compile(
@@ -27,12 +23,8 @@ WHEEL_NAME = re.compile(
     )\.whl$""",
     re.VERBOSE).match
 
-NAMESPACE_PACKAGE_INIT = '''\
-try:
-    __import__('pkg_resources').declare_namespace(__name__)
-except ImportError:
-    __path__ = __import__('pkgutil').extend_path(__path__, __name__)
-'''
+NAMESPACE_PACKAGE_INIT = \
+    "__import__('pkg_resources').declare_namespace(__name__)\n"
 
 
 def unpack(src_dir, dst_dir):
@@ -77,7 +69,8 @@ class Wheel:
 
     def is_compatible(self):
         '''Is the wheel is compatible with the current platform?'''
-        supported_tags = set((t.interpreter, t.abi, t.platform) for t in sys_tags())
+        supported_tags = set(
+            (t.interpreter, t.abi, t.platform) for t in sys_tags())
         return next((True for t in self.tags() if t in supported_tags), False)
 
     def egg_name(self):
@@ -115,7 +108,7 @@ class Wheel:
     def _convert_metadata(zf, destination_eggdir, dist_info, egg_info):
         def get_metadata(name):
             with zf.open(posixpath.join(dist_info, name)) as fp:
-                value = fp.read().decode('utf-8') if PY3 else fp.read()
+                value = fp.read().decode('utf-8')
                 return email.parser.Parser().parsestr(value)
 
         wheel_metadata = get_metadata('WHEEL')

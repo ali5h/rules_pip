@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Easy Install
 ------------
@@ -39,18 +38,15 @@ import contextlib
 import subprocess
 import shlex
 import io
+import configparser
 
 
 from sysconfig import get_config_vars, get_path
 
 from setuptools import SetuptoolsDeprecationWarning
 
-from setuptools.extern import six
-from setuptools.extern.six.moves import configparser, map
-
 from setuptools import Command
 from setuptools.sandbox import run_setup
-from setuptools.py27compat import rmtree_safe
 from setuptools.command import setopt
 from setuptools.archive_util import unpack_archive
 from setuptools.package_index import (
@@ -64,9 +60,7 @@ from pkg_resources import (
     Distribution, PathMetadata, EggMetadata, WorkingSet, DistributionNotFound,
     VersionConflict, DEVELOP_DIST,
 )
-import pkg_resources.py31compat
-
-__metaclass__ = type
+import pkg_resources
 
 # Turn on PEP440Warnings
 warnings.filterwarnings("default", category=pkg_resources.PEP440Warning)
@@ -97,31 +91,20 @@ def samefile(p1, p2):
     return norm_p1 == norm_p2
 
 
-if six.PY2:
-
-    def _to_bytes(s):
-        return s
-
-    def isascii(s):
-        try:
-            six.text_type(s, 'ascii')
-            return True
-        except UnicodeError:
-            return False
-else:
-
-    def _to_bytes(s):
-        return s.encode('utf8')
-
-    def isascii(s):
-        try:
-            s.encode('ascii')
-            return True
-        except UnicodeError:
-            return False
+def _to_bytes(s):
+    return s.encode('utf8')
 
 
-_one_liner = lambda text: textwrap.dedent(text).strip().replace('\n', '; ')
+def isascii(s):
+    try:
+        s.encode('ascii')
+        return True
+    except UnicodeError:
+        return False
+
+
+def _one_liner(text):
+    return textwrap.dedent(text).strip().replace('\n', '; ')
 
 
 class easy_install(Command):
@@ -156,18 +139,15 @@ class easy_install(Command):
          "allow building eggs from local checkouts"),
         ('version', None, "print version information and exit"),
         ('no-find-links', None,
-         "Don't load find-links defined in packages being installed")
+         "Don't load find-links defined in packages being installed"),
+        ('user', None, "install in user site-package '%s'" % site.USER_SITE)
     ]
     boolean_options = [
         'zip-ok', 'multi-version', 'exclude-scripts', 'upgrade', 'always-copy',
         'editable',
-        'no-deps', 'local-snapshots-ok', 'version'
+        'no-deps', 'local-snapshots-ok', 'version',
+        'user'
     ]
-
-    if site.ENABLE_USER_SITE:
-        help_msg = "install in user site-package '%s'" % site.USER_SITE
-        user_options.append(('user', None, help_msg))
-        boolean_options.append('user')
 
     negative_opt = {'always-unzip': 'zip-ok'}
     create_index = PackageIndex
@@ -208,7 +188,6 @@ class easy_install(Command):
         self.pth_file = self.always_copy_from = None
         self.site_dirs = None
         self.installed_projects = {}
-        self.sitepy_installed = False
         # Always read easy_install options, even if we are subclassed, or have
         # an independent instance created.  This ensures that defaults will
         # always come from the standard configuration file(s)' "easy_install"
@@ -271,6 +250,9 @@ class easy_install(Command):
         if site.ENABLE_USER_SITE:
             self.config_vars['userbase'] = self.install_userbase
             self.config_vars['usersite'] = self.install_usersite
+
+        elif self.user:
+            log.warn("WARNING: The user site-packages directory is disabled.")
 
         self._fix_install_dir_for_user_site()
 
@@ -342,7 +324,7 @@ class easy_install(Command):
         self.local_index = Environment(self.shadow_path + sys.path)
 
         if self.find_links is not None:
-            if isinstance(self.find_links, six.string_types):
+            if isinstance(self.find_links, str):
                 self.find_links = self.find_links.split()
         else:
             self.find_links = []
@@ -356,8 +338,10 @@ class easy_install(Command):
                 self.optimize = int(self.optimize)
                 if not (0 <= self.optimize <= 2):
                     raise ValueError
-            except ValueError:
-                raise DistutilsOptionError("--optimize must be 0, 1, or 2")
+            except ValueError as e:
+                raise DistutilsOptionError(
+                    "--optimize must be 0, 1, or 2"
+                ) from e
 
         if self.editable and not self.build_directory:
             raise DistutilsArgError(
@@ -414,8 +398,8 @@ class easy_install(Command):
         if show_deprecation:
             self.announce(
                 "WARNING: The easy_install command is deprecated "
-                "and will be removed in a future version."
-                , log.WARN,
+                "and will be removed in a future version.",
+                log.WARN,
             )
         if self.verbose != self.distribution.verbose:
             log.set_verbosity(self.verbose)
@@ -459,6 +443,12 @@ class easy_install(Command):
         instdir = normalize_path(self.install_dir)
         pth_file = os.path.join(instdir, 'easy-install.pth')
 
+        if not os.path.exists(instdir):
+            try:
+                os.makedirs(instdir)
+            except (OSError, IOError):
+                self.cant_write_to_target()
+
         # Is it a configured, PYTHONPATH, implicit, or explicit site dir?
         is_site_dir = instdir in self.all_site_dirs
 
@@ -478,8 +468,9 @@ class easy_install(Command):
                 self.cant_write_to_target()
 
         if not is_site_dir and not self.multi_version:
-            # Can't install non-multi to non-site dir
-            raise DistutilsError(self.no_default_version_msg())
+            # Can't install non-multi to non-site dir with easy_install
+            pythonpath = os.environ.get('PYTHONPATH', '')
+            log.warn(self.__no_default_msg, self.install_dir, pythonpath)
 
         if is_site_dir:
             if self.pth_file is None:
@@ -487,12 +478,8 @@ class easy_install(Command):
         else:
             self.pth_file = None
 
-        if instdir not in map(normalize_path, _pythonpath()):
-            # only PYTHONPATH dirs need a site.py, so pretend it's there
-            self.sitepy_installed = True
-        elif self.multi_version and not os.path.exists(pth_file):
-            self.sitepy_installed = True  # don't need site.py in this case
-            self.pth_file = None  # and don't create a .pth file
+        if self.multi_version and not os.path.exists(pth_file):
+            self.pth_file = None  # don't create a .pth file
         self.install_dir = instdir
 
     __cant_write_msg = textwrap.dedent("""
@@ -507,13 +494,13 @@ class easy_install(Command):
         the distutils default setting) was:
 
             %s
-        """).lstrip()
+        """).lstrip()  # noqa
 
     __not_exists_id = textwrap.dedent("""
         This directory does not currently exist.  Please create it and try again, or
         choose a different installation directory (using the -d or --install-dir
         option).
-        """).lstrip()
+        """).lstrip()  # noqa
 
     __access_msg = textwrap.dedent("""
         Perhaps your account does not have write access to this directory?  If the
@@ -529,7 +516,7 @@ class easy_install(Command):
           https://setuptools.readthedocs.io/en/latest/easy_install.html
 
         Please make the appropriate changes for your system and try again.
-        """).lstrip()
+        """).lstrip()  # noqa
 
     def cant_write_to_target(self):
         msg = self.__cant_write_msg % (sys.exc_info()[1], self.install_dir,)
@@ -557,7 +544,7 @@ class easy_install(Command):
             if ok_exists:
                 os.unlink(ok_file)
             dirname = os.path.dirname(ok_file)
-            pkg_resources.py31compat.makedirs(dirname, exist_ok=True)
+            os.makedirs(dirname, exist_ok=True)
             f = open(pth_file, 'w')
         except (OSError, IOError):
             self.cant_write_to_target()
@@ -646,12 +633,9 @@ class easy_install(Command):
             # cast to str as workaround for #709 and #710 and #712
             yield str(tmpdir)
         finally:
-            os.path.exists(tmpdir) and rmtree(rmtree_safe(tmpdir))
+            os.path.exists(tmpdir) and rmtree(tmpdir)
 
     def easy_install(self, spec, deps=False):
-        if not self.editable:
-            self.install_site_py()
-
         with self._tmpdir() as tmpdir:
             if not isinstance(spec, Requirement):
                 if URL_SCHEME(spec):
@@ -758,9 +742,9 @@ class easy_install(Command):
                 [requirement], self.local_index, self.easy_install
             )
         except DistributionNotFound as e:
-            raise DistutilsError(str(e))
+            raise DistutilsError(str(e)) from e
         except VersionConflict as e:
-            raise DistutilsError(e.report())
+            raise DistutilsError(e.report()) from e
         if self.always_copy or self.always_copy_from:
             # Force all the relevant distros to be copied or activated
             for dist in distros:
@@ -1093,13 +1077,13 @@ class easy_install(Command):
             pkg_resources.require("%(name)s")  # latest installed version
             pkg_resources.require("%(name)s==%(version)s")  # this exact version
             pkg_resources.require("%(name)s>=%(version)s")  # this version or higher
-        """).lstrip()
+        """).lstrip()  # noqa
 
     __id_warning = textwrap.dedent("""
         Note also that the installation directory must be on sys.path at runtime for
         this to work.  (e.g. by being the application's script directory, by being on
         PYTHONPATH, or by being added to sys.path by your code.)
-        """)
+        """)  # noqa
 
     def installation_report(self, req, dist, what="Installed"):
         """Helpful installation message for display to package users"""
@@ -1124,7 +1108,7 @@ class easy_install(Command):
             %(python)s setup.py develop
 
         See the setuptools documentation for the "develop" command for more info.
-        """).lstrip()
+        """).lstrip()  # noqa
 
     def report_editable(self, spec, setup_script):
         dirname = os.path.dirname(setup_script)
@@ -1149,7 +1133,9 @@ class easy_install(Command):
         try:
             run_setup(setup_script, args)
         except SystemExit as v:
-            raise DistutilsError("Setup script exited with %s" % (v.args[0],))
+            raise DistutilsError(
+                "Setup script exited with %s" % (v.args[0],)
+            ) from v
 
     def build_and_install(self, setup_script, setup_base):
         args = ['bdist_egg', '--dist-dir']
@@ -1307,50 +1293,15 @@ class easy_install(Command):
           https://setuptools.readthedocs.io/en/latest/easy_install.html#custom-installation-locations
 
 
-        Please make the appropriate changes for your system and try again.""").lstrip()
-
-    def no_default_version_msg(self):
-        template = self.__no_default_msg
-        return template % (self.install_dir, os.environ.get('PYTHONPATH', ''))
-
-    def install_site_py(self):
-        """Make sure there's a site.py in the target dir, if needed"""
-
-        if self.sitepy_installed:
-            return  # already did it, or don't need to
-
-        sitepy = os.path.join(self.install_dir, "site.py")
-        source = resource_string("setuptools", "site-patch.py")
-        source = source.decode('utf-8')
-        current = ""
-
-        if os.path.exists(sitepy):
-            log.debug("Checking existing site.py in %s", self.install_dir)
-            with io.open(sitepy) as strm:
-                current = strm.read()
-
-            if not current.startswith('def __boot():'):
-                raise DistutilsError(
-                    "%s is not a setuptools-generated site.py; please"
-                    " remove it." % sitepy
-                )
-
-        if current != source:
-            log.info("Creating %s", sitepy)
-            if not self.dry_run:
-                ensure_directory(sitepy)
-                with io.open(sitepy, 'w', encoding='utf-8') as strm:
-                    strm.write(source)
-            self.byte_compile([sitepy])
-
-        self.sitepy_installed = True
+        Please make the appropriate changes for your system and try again.
+        """).strip()
 
     def create_home_path(self):
         """Create directories under ~."""
         if not self.user:
             return
         home = convert_path(os.path.expanduser("~"))
-        for name, path in six.iteritems(self.config_vars):
+        for name, path in self.config_vars.items():
             if path.startswith(home) and not os.path.isdir(path):
                 self.debug_print("os.makedirs('%s', 0o700)" % path)
                 os.makedirs(path, 0o700)
@@ -1531,7 +1482,7 @@ def extract_wininst_cfg(dist_filename):
             # Now the config is in bytes, but for RawConfigParser, it should
             #  be text, so decode it.
             config = config.decode(sys.getfilesystemencoding())
-            cfg.readfp(six.StringIO(config))
+            cfg.readfp(io.StringIO(config))
         except configparser.Error:
             return None
         if not cfg.has_section('metadata') or not cfg.has_section('Setup'):
@@ -1566,9 +1517,7 @@ def get_exe_prefixes(exe_filename):
             if name.endswith('-nspkg.pth'):
                 continue
             if parts[0].upper() in ('PURELIB', 'PLATLIB'):
-                contents = z.read(name)
-                if not six.PY2:
-                    contents = contents.decode()
+                contents = z.read(name).decode()
                 for pth in yield_lines(contents):
                     pth = pth.strip().replace('\\', '/')
                     if not pth.startswith('import'):
@@ -1732,7 +1681,8 @@ def auto_chmod(func, arg, exc):
         chmod(arg, stat.S_IWRITE)
         return func(arg)
     et, ev, _ = sys.exc_info()
-    six.reraise(et, (ev[0], ev[1] + (" %s %s" % (func, arg))))
+    # TODO: This code doesn't make sense. What is it trying to do?
+    raise (ev[0], ev[1] + (" %s %s" % (func, arg)))
 
 
 def update_dist_caches(dist_path, fix_zipimporter_caches):
@@ -2068,17 +2018,38 @@ class ScriptWriter:
 
     template = textwrap.dedent(r"""
         # EASY-INSTALL-ENTRY-SCRIPT: %(spec)r,%(group)r,%(name)r
-        __requires__ = %(spec)r
         import re
         import sys
-        from pkg_resources import load_entry_point
+
+        # for compatibility with easy_install; see #2198
+        __requires__ = %(spec)r
+
+        try:
+            from importlib.metadata import distribution
+        except ImportError:
+            try:
+                from importlib_metadata import distribution
+            except ImportError:
+                from pkg_resources import load_entry_point
+
+
+        def importlib_load_entry_point(spec, group, name):
+            dist_name, _, _ = spec.partition('==')
+            matches = (
+                entry_point
+                for entry_point in distribution(dist_name).entry_points
+                if entry_point.group == group and entry_point.name == name
+            )
+            return next(matches).load()
+
+
+        globals().setdefault('load_entry_point', importlib_load_entry_point)
+
 
         if __name__ == '__main__':
             sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
-            sys.exit(
-                load_entry_point(%(spec)r, %(group)r, %(name)r)()
-            )
-    """).lstrip()
+            sys.exit(load_entry_point(%(spec)r, %(group)r, %(name)r)())
+        """).lstrip()
 
     command_spec_class = CommandSpec
 
@@ -2093,7 +2064,8 @@ class ScriptWriter:
     @classmethod
     def get_script_header(cls, script_text, executable=None, wininst=False):
         # for backward compatibility
-        warnings.warn("Use get_header", EasyInstallDeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "Use get_header", EasyInstallDeprecationWarning, stacklevel=2)
         if wininst:
             executable = "python.exe"
         return cls.get_header(script_text, executable)
@@ -2273,10 +2245,7 @@ def get_win_launcher(type):
 
 def load_launcher_manifest(name):
     manifest = pkg_resources.resource_string(__name__, 'launcher manifest.xml')
-    if six.PY2:
-        return manifest % vars()
-    else:
-        return manifest.decode('utf-8') % vars()
+    return manifest.decode('utf-8') % vars()
 
 
 def rmtree(path, ignore_errors=False, onerror=auto_chmod):
@@ -2342,6 +2311,8 @@ def _patch_usage():
     finally:
         distutils.core.gen_usage = saved
 
+
 class EasyInstallDeprecationWarning(SetuptoolsDeprecationWarning):
-    """Class for warning about deprecations in EasyInstall in SetupTools. Not ignored by default, unlike DeprecationWarning."""
-    
+    """
+    Warning for EasyInstall deprecations, bypassing suppression.
+    """

@@ -33,9 +33,13 @@ Important remarks:
 - All structures signatures are taken form macosx header files.
 - I think that binary format will be more stable than `otool` output.
   and if apple introduce some changes both implementation will need to be updated.
+- The system compile will set the deployment target no lower than
+  11.0 for arm64 builds. For "Universal 2" builds use the x86_64 deployment
+  target when the arm64 target is 11.0.
 """
 
 import ctypes
+import os
 import sys
 
 """here the needed const and struct from mach-o header files"""
@@ -52,6 +56,7 @@ MH_CIGAM_64 = 0xcffaedfe
 LC_VERSION_MIN_MACOSX = 0x24
 LC_BUILD_VERSION = 0x32
 
+CPU_TYPE_ARM64 = 0x0100000c
 
 mach_header_fields = [
         ("magic", ctypes.c_uint32), ("cputype", ctypes.c_int),
@@ -270,6 +275,16 @@ def extract_macosx_min_system_version(path_to_lib):
                 try:
                     version = read_mach_header(lib_file, el.offset)
                     if version is not None:
+                        if el.cputype == CPU_TYPE_ARM64 and len(fat_arch_list) != 1:
+                            # Xcode will not set the deployment target below 11.0.0
+                            # for the arm64 architecture. Ignore the arm64 deployment
+                            # in fat binaries when the target is 11.0.0, that way
+                            # the other architetures can select a lower deployment
+                            # target.
+                            # This is safe because there is no arm64 variant for
+                            # macOS 10.15 or earlier.
+                            if version == (11, 0, 0):
+                                continue
                         versions_list.append(version)
                 except ValueError:
                     pass
@@ -339,3 +354,75 @@ def parse_version(version):
     y = (version & 0x0000ff00) >> 8
     z = (version & 0x000000ff)
     return x, y, z
+
+
+def calculate_macosx_platform_tag(archive_root, platform_tag):
+    """
+    Calculate proper macosx platform tag basing on files which are included to wheel
+
+    Example platform tag `macosx-10.14-x86_64`
+    """
+    prefix, base_version, suffix = platform_tag.split('-')
+    base_version = tuple([int(x) for x in base_version.split(".")])
+    base_version = base_version[:2]
+    if base_version[0] > 10:
+        base_version = (base_version[0], 0)
+    assert len(base_version) == 2
+    if "MACOSX_DEPLOYMENT_TARGET" in os.environ:
+        deploy_target = tuple([int(x) for x in os.environ[
+            "MACOSX_DEPLOYMENT_TARGET"].split(".")])
+        deploy_target = deploy_target[:2]
+        if deploy_target[0] > 10:
+            deploy_target = (deploy_target[0], 0)
+        if deploy_target < base_version:
+            sys.stderr.write(
+                 "[WARNING] MACOSX_DEPLOYMENT_TARGET is set to a lower value ({}) than the "
+                 "version on which the Python interpreter was compiled ({}), and will be "
+                 "ignored.\n".format('.'.join(str(x) for x in deploy_target),
+                                     '.'.join(str(x) for x in base_version))
+                )
+        else:
+            base_version = deploy_target
+
+    assert len(base_version) == 2
+    start_version = base_version
+    versions_dict = {}
+    for (dirpath, dirnames, filenames) in os.walk(archive_root):
+        for filename in filenames:
+            if filename.endswith('.dylib') or filename.endswith('.so'):
+                lib_path = os.path.join(dirpath, filename)
+                min_ver = extract_macosx_min_system_version(lib_path)
+                if min_ver is not None:
+                    min_ver = min_ver[0:2]
+                    if min_ver[0] > 10:
+                        min_ver = (min_ver[0], 0)
+                    versions_dict[lib_path] = min_ver
+
+    if len(versions_dict) > 0:
+        base_version = max(base_version, max(versions_dict.values()))
+
+    # macosx platform tag do not support minor bugfix release
+    fin_base_version = "_".join([str(x) for x in base_version])
+    if start_version < base_version:
+        problematic_files = [k for k, v in versions_dict.items() if v > start_version]
+        problematic_files = "\n".join(problematic_files)
+        if len(problematic_files) == 1:
+            files_form = "this file"
+        else:
+            files_form = "these files"
+        error_message = \
+            "[WARNING] This wheel needs a higher macOS version than {}  " \
+            "To silence this warning, set MACOSX_DEPLOYMENT_TARGET to at least " +\
+            fin_base_version + " or recreate " + files_form + " with lower " \
+            "MACOSX_DEPLOYMENT_TARGET:  \n" + problematic_files
+
+        if "MACOSX_DEPLOYMENT_TARGET" in os.environ:
+            error_message = error_message.format("is set in MACOSX_DEPLOYMENT_TARGET variable.")
+        else:
+            error_message = error_message.format(
+                "the version your Python interpreter is compiled against.")
+
+        sys.stderr.write(error_message)
+
+    platform_tag = prefix + "_" + fin_base_version + "_" + suffix
+    return platform_tag

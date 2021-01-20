@@ -8,9 +8,6 @@ These are meant to be used elsewhere within pip to create instances of
 InstallRequirement.
 """
 
-# The following comment should be removed at some point in the future.
-# mypy: strict-optional=False
-
 import logging
 import os
 import re
@@ -26,16 +23,16 @@ from pip._internal.models.link import Link
 from pip._internal.models.wheel import Wheel
 from pip._internal.pyproject import make_pyproject_path
 from pip._internal.req.req_install import InstallRequirement
-from pip._internal.utils.filetypes import ARCHIVE_EXTENSIONS
-from pip._internal.utils.misc import is_installable_dir, splitext
+from pip._internal.utils.deprecation import deprecated
+from pip._internal.utils.filetypes import is_archive_file
+from pip._internal.utils.misc import is_installable_dir
 from pip._internal.utils.typing import MYPY_CHECK_RUNNING
 from pip._internal.utils.urls import path_to_url
 from pip._internal.vcs import is_url, vcs
 
 if MYPY_CHECK_RUNNING:
-    from typing import (
-        Any, Dict, Optional, Set, Tuple, Union,
-    )
+    from typing import Any, Dict, Optional, Set, Tuple, Union
+
     from pip._internal.req.req_file import ParsedRequirement
 
 
@@ -46,15 +43,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 operators = Specifier._operators.keys()
-
-
-def is_archive_file(name):
-    # type: (str) -> bool
-    """Return True if `name` is a considered as an archive file."""
-    ext = splitext(name)[1].lower()
-    if ext in ARCHIVE_EXTENSIONS:
-        return True
-    return False
 
 
 def _strip_extras(path):
@@ -78,7 +66,7 @@ def convert_extras(extras):
 
 
 def parse_editable(editable_req):
-    # type: (str) -> Tuple[Optional[str], str, Optional[Set[str]]]
+    # type: (str) -> Tuple[Optional[str], str, Set[str]]
     """Parses an editable requirement into:
         - a requirement name
         - an URL
@@ -120,7 +108,7 @@ def parse_editable(editable_req):
                 Requirement("placeholder" + extras.lower()).extras,
             )
         else:
-            return package_name, url_no_extras, None
+            return package_name, url_no_extras, set()
 
     for version_control in vcs:
         if url.lower().startswith('{}:'.format(version_control)):
@@ -149,7 +137,7 @@ def parse_editable(editable_req):
             "Could not detect requirement name for '{}', please specify one "
             "with #egg=your_package_name".format(editable_req)
         )
-    return package_name, url, None
+    return package_name, url, set()
 
 
 def deduce_helpful_msg(req):
@@ -161,7 +149,7 @@ def deduce_helpful_msg(req):
     """
     msg = ""
     if os.path.exists(req):
-        msg = " It does exist."
+        msg = " The path does exist. "
         # Try to parse and check if it is a requirements file.
         try:
             with open(req, 'r') as fp:
@@ -175,8 +163,9 @@ def deduce_helpful_msg(req):
                     " the packages specified within it."
                 ).format(req)
         except RequirementParseError:
-            logger.debug("Cannot parse '{}' as requirements \
-            file".format(req), exc_info=True)
+            logger.debug(
+                "Cannot parse '%s' as requirements file", req, exc_info=True
+            )
     else:
         msg += " File '{}' does not exist.".format(req)
     return msg
@@ -222,7 +211,8 @@ def install_req_from_editable(
     use_pep517=None,  # type: Optional[bool]
     isolated=False,  # type: bool
     options=None,  # type: Optional[Dict[str, Any]]
-    constraint=False  # type: bool
+    constraint=False,  # type: bool
+    user_supplied=False,  # type: bool
 ):
     # type: (...) -> InstallRequirement
 
@@ -231,6 +221,7 @@ def install_req_from_editable(
     return InstallRequirement(
         parts.requirement,
         comes_from=comes_from,
+        user_supplied=user_supplied,
         editable=True,
         link=parts.link,
         constraint=constraint,
@@ -264,7 +255,7 @@ def _looks_like_path(name):
 
 
 def _get_url_from_path(path, name):
-    # type: (str, str) -> str
+    # type: (str, str) -> Optional[str]
     """
     First, it checks whether a provided path is an installable directory
     (e.g. it has a setup.py). If it is, returns the path.
@@ -371,6 +362,17 @@ def parse_req_from_line(name, line_source):
             if add_msg:
                 msg += '\nHint: {}'.format(add_msg)
             raise InstallationError(msg)
+        else:
+            # Deprecate extras after specifiers: "name>=1.0[extras]"
+            # This currently works by accident because _strip_extras() parses
+            # any extras in the end of the string and those are saved in
+            # RequirementParts
+            for spec in req.specifier:
+                spec_str = str(spec)
+                if spec_str.endswith(']'):
+                    msg = "Extras after version '{}'.".format(spec_str)
+                    replace = "moving the extras before version specifiers"
+                    deprecated(msg, replacement=replace, gone_in="21.0")
     else:
         req = None
 
@@ -385,6 +387,7 @@ def install_req_from_line(
     options=None,  # type: Optional[Dict[str, Any]]
     constraint=False,  # type: bool
     line_source=None,  # type: Optional[str]
+    user_supplied=False,  # type: bool
 ):
     # type: (...) -> InstallRequirement
     """Creates an InstallRequirement from a name, which might be a
@@ -403,6 +406,7 @@ def install_req_from_line(
         hash_options=options.get("hashes", {}) if options else {},
         constraint=constraint,
         extras=parts.extras,
+        user_supplied=user_supplied,
     )
 
 
@@ -410,7 +414,8 @@ def install_req_from_req_string(
     req_string,  # type: str
     comes_from=None,  # type: Optional[InstallRequirement]
     isolated=False,  # type: bool
-    use_pep517=None  # type: Optional[bool]
+    use_pep517=None,  # type: Optional[bool]
+    user_supplied=False,  # type: bool
 ):
     # type: (...) -> InstallRequirement
     try:
@@ -432,14 +437,19 @@ def install_req_from_req_string(
         )
 
     return InstallRequirement(
-        req, comes_from, isolated=isolated, use_pep517=use_pep517
+        req,
+        comes_from,
+        isolated=isolated,
+        use_pep517=use_pep517,
+        user_supplied=user_supplied,
     )
 
 
 def install_req_from_parsed_requirement(
     parsed_req,  # type: ParsedRequirement
     isolated=False,  # type: bool
-    use_pep517=None  # type: Optional[bool]
+    use_pep517=None,  # type: Optional[bool]
+    user_supplied=False,  # type: bool
 ):
     # type: (...) -> InstallRequirement
     if parsed_req.is_editable:
@@ -449,6 +459,7 @@ def install_req_from_parsed_requirement(
             use_pep517=use_pep517,
             constraint=parsed_req.constraint,
             isolated=isolated,
+            user_supplied=user_supplied,
         )
 
     else:
@@ -460,5 +471,6 @@ def install_req_from_parsed_requirement(
             options=parsed_req.options,
             constraint=parsed_req.constraint,
             line_source=parsed_req.line_source,
+            user_supplied=user_supplied,
         )
     return req

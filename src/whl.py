@@ -69,6 +69,7 @@ def install_package(pkg, directory, pip_args):
         directory,
         "--no-deps",
         "--ignore-requires-python",
+        "--use-deprecated=legacy-resolver",
         pkg,
     ] + pip_args
     cmd = create_command("install")
