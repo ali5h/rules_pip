@@ -32,13 +32,12 @@ import sys
 import tokenize
 import shutil
 import contextlib
+import tempfile
 
 import setuptools
 import distutils
-from setuptools.py31compat import TemporaryDirectory
 
 from pkg_resources import parse_requirements
-from pkg_resources.py31compat import makedirs
 
 __all__ = ['get_requires_for_build_sdist',
            'get_requires_for_build_wheel',
@@ -47,6 +46,7 @@ __all__ = ['get_requires_for_build_sdist',
            'build_sdist',
            '__legacy__',
            'SetupRequirementsError']
+
 
 class SetupRequirementsError(BaseException):
     def __init__(self, specifiers):
@@ -75,17 +75,20 @@ class Distribution(setuptools.dist.Distribution):
             distutils.core.Distribution = orig
 
 
-def _to_str(s):
+@contextlib.contextmanager
+def no_install_setup_requires():
+    """Temporarily disable installing setup_requires
+
+    Under PEP 517, the backend reports build dependencies to the frontend,
+    and the frontend is responsible for ensuring they're installed.
+    So setuptools (acting as a backend) should not try to install them.
     """
-    Convert a filename to a string (on Python 2, explicitly
-    a byte string, not Unicode) as distutils checks for the
-    exact type str.
-    """
-    if sys.version_info[0] == 2 and not isinstance(s, str):
-        # Assume it's Unicode, as that's what the PEP says
-        # should be provided.
-        return s.encode(sys.getfilesystemencoding())
-    return s
+    orig = setuptools._install_setup_requires
+    setuptools._install_setup_requires = lambda attrs: None
+    try:
+        yield
+    finally:
+        setuptools._install_setup_requires = orig
 
 
 def _get_immediate_subdirectories(a_dir):
@@ -143,7 +146,8 @@ class _BuildMetaBackend(object):
 
     def get_requires_for_build_wheel(self, config_settings=None):
         config_settings = self._fix_config(config_settings)
-        return self._get_build_requires(config_settings, requirements=['wheel'])
+        return self._get_build_requires(
+            config_settings, requirements=['wheel'])
 
     def get_requires_for_build_sdist(self, config_settings=None):
         config_settings = self._fix_config(config_settings)
@@ -151,17 +155,20 @@ class _BuildMetaBackend(object):
 
     def prepare_metadata_for_build_wheel(self, metadata_directory,
                                          config_settings=None):
-        sys.argv = sys.argv[:1] + ['dist_info', '--egg-base',
-                                   _to_str(metadata_directory)]
-        self.run_setup()
+        sys.argv = sys.argv[:1] + [
+            'dist_info', '--egg-base', metadata_directory]
+        with no_install_setup_requires():
+            self.run_setup()
 
         dist_info_directory = metadata_directory
         while True:
             dist_infos = [f for f in os.listdir(dist_info_directory)
                           if f.endswith('.dist-info')]
 
-            if (len(dist_infos) == 0 and
-                len(_get_immediate_subdirectories(dist_info_directory)) == 1):
+            if (
+                len(dist_infos) == 0 and
+                len(_get_immediate_subdirectories(dist_info_directory)) == 1
+            ):
 
                 dist_info_directory = os.path.join(
                     dist_info_directory, os.listdir(dist_info_directory)[0])
@@ -186,14 +193,16 @@ class _BuildMetaBackend(object):
         result_directory = os.path.abspath(result_directory)
 
         # Build in a temporary directory, then copy to the target.
-        makedirs(result_directory, exist_ok=True)
-        with TemporaryDirectory(dir=result_directory) as tmp_dist_dir:
+        os.makedirs(result_directory, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=result_directory) as tmp_dist_dir:
             sys.argv = (sys.argv[:1] + setup_command +
                         ['--dist-dir', tmp_dist_dir] +
                         config_settings["--global-option"])
-            self.run_setup()
+            with no_install_setup_requires():
+                self.run_setup()
 
-            result_basename = _file_with_extension(tmp_dist_dir, result_extension)
+            result_basename = _file_with_extension(
+                tmp_dist_dir, result_extension)
             result_path = os.path.join(result_directory, result_basename)
             if os.path.exists(result_path):
                 # os.rename will fail overwriting on non-Unix.
@@ -201,7 +210,6 @@ class _BuildMetaBackend(object):
             os.rename(os.path.join(tmp_dist_dir, result_basename), result_path)
 
         return result_basename
-
 
     def build_wheel(self, wheel_directory, config_settings=None,
                     metadata_directory=None):
@@ -217,9 +225,12 @@ class _BuildMetaBackend(object):
 class _BuildMetaLegacyBackend(_BuildMetaBackend):
     """Compatibility backend for setuptools
 
-    This is a version of setuptools.build_meta that endeavors to maintain backwards
-    compatibility with pre-PEP 517 modes of invocation. It exists as a temporary
-    bridge between the old packaging mechanism and the new packaging mechanism,
+    This is a version of setuptools.build_meta that endeavors
+    to maintain backwards
+    compatibility with pre-PEP 517 modes of invocation. It
+    exists as a temporary
+    bridge between the old packaging mechanism and the new
+    packaging mechanism,
     and will eventually be removed.
     """
     def run_setup(self, setup_script='setup.py'):
@@ -249,6 +260,7 @@ class _BuildMetaLegacyBackend(_BuildMetaBackend):
             # within the hook after run_setup is called.
             sys.path[:] = sys_path
             sys.argv[0] = sys_argv_0
+
 
 # The primary backend
 _BACKEND = _BuildMetaBackend()

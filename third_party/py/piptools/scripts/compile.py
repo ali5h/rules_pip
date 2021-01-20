@@ -59,7 +59,9 @@ class BaseCommand(Command):
         return bool(self._os_args & args)
 
 
-@click.command(cls=BaseCommand)
+@click.command(
+    cls=BaseCommand, context_settings={"help_option_names": ("-h", "--help")}
+)
 @click.version_option()
 @click.pass_context
 @click.option("-v", "--verbose", count=True, help="Show more output")
@@ -88,7 +90,6 @@ class BaseCommand(Command):
     "--find-links",
     multiple=True,
     help="Look for archives in this directory or on this HTML page",
-    envvar="PIP_FIND_LINKS",
 )
 @click.option(
     "-i",
@@ -96,13 +97,9 @@ class BaseCommand(Command):
     help="Change index URL (defaults to {index_url})".format(
         index_url=redact_auth_from_url(_get_default_option("index_url"))
     ),
-    envvar="PIP_INDEX_URL",
 )
 @click.option(
-    "--extra-index-url",
-    multiple=True,
-    help="Add additional index URL to search",
-    envvar="PIP_EXTRA_INDEX_URL",
+    "--extra-index-url", multiple=True, help="Add additional index URL to search"
 )
 @click.option("--cert", help="Path to alternate CA bundle.")
 @click.option(
@@ -113,7 +110,6 @@ class BaseCommand(Command):
 @click.option(
     "--trusted-host",
     multiple=True,
-    envvar="PIP_TRUSTED_HOST",
     help="Mark this host as trusted, even though it does not have "
     "valid or any HTTPS.",
 )
@@ -168,11 +164,16 @@ class BaseCommand(Command):
     ),
 )
 @click.option(
-    "--allow-unsafe",
+    "--allow-unsafe/--no-allow-unsafe",
     is_flag=True,
     default=False,
-    help="Pin packages considered unsafe: {}".format(
-        ", ".join(sorted(UNSAFE_PACKAGES))
+    help=(
+        "Pin packages considered unsafe: {}.\n\n"
+        "WARNING: Future versions of pip-tools will enable this behavior by default. "
+        "Use --no-allow-unsafe to keep the old behavior. It is recommended to pass the "
+        "--allow-unsafe now to adapt to the upcoming change.".format(
+            ", ".join(sorted(UNSAFE_PACKAGES))
+        )
     ),
 )
 @click.option(
@@ -180,6 +181,15 @@ class BaseCommand(Command):
     is_flag=True,
     default=False,
     help="Generate pip 8 style hashes in the resulting requirements file.",
+)
+@click.option(
+    "--reuse-hashes/--no-reuse-hashes",
+    is_flag=True,
+    default=True,
+    help=(
+        "Improve the speed of --generate-hashes by reusing the hashes from an "
+        "existing output file."
+    ),
 )
 @click.option(
     "--max-rounds",
@@ -205,9 +215,7 @@ class BaseCommand(Command):
     "--cache-dir",
     help="Store the cache data in DIRECTORY.",
     default=CACHE_DIR,
-    envvar="PIP_TOOLS_CACHE_DIR",
     show_default=True,
-    show_envvar=True,
     type=click.Path(file_okay=False, writable=True),
 )
 @click.option("--pip-args", help="Arguments to pass directly to the pip command.")
@@ -239,6 +247,7 @@ def cli(
     output_file,
     allow_unsafe,
     generate_hashes,
+    reuse_hashes,
     src_files,
     max_rounds,
     build_isolation,
@@ -304,23 +313,20 @@ def cli(
 
     right_args = shlex.split(pip_args or "")
     pip_args = []
-    if find_links:
-        for link in find_links:
-            pip_args.extend(["-f", link])
+    for link in find_links:
+        pip_args.extend(["-f", link])
     if index_url:
         pip_args.extend(["-i", index_url])
-    if extra_index_url:
-        for extra_index in extra_index_url:
-            pip_args.extend(["--extra-index-url", extra_index])
+    for extra_index in extra_index_url:
+        pip_args.extend(["--extra-index-url", extra_index])
     if cert:
         pip_args.extend(["--cert", cert])
     if client_cert:
         pip_args.extend(["--client-cert", client_cert])
     if pre:
         pip_args.extend(["--pre"])
-    if trusted_host:
-        for host in trusted_host:
-            pip_args.extend(["--trusted-host", host])
+    for host in trusted_host:
+        pip_args.extend(["--trusted-host", host])
 
     if not build_isolation:
         pip_args.append("--no-build-isolation")
@@ -358,7 +364,9 @@ def cli(
                 existing_pins_to_upgrade.add(key)
             else:
                 existing_pins[key] = ireq
-        repository = LocalRequirementsRepository(existing_pins, repository)
+        repository = LocalRequirementsRepository(
+            existing_pins, repository, reuse_hashes=reuse_hashes
+        )
 
     ###
     # Parsing/collecting initial requirements

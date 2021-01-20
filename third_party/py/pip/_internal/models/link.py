@@ -16,6 +16,7 @@ from pip._internal.utils.urls import path_to_url, url_to_path
 
 if MYPY_CHECK_RUNNING:
     from typing import Optional, Text, Tuple, Union
+
     from pip._internal.index.collector import HTMLPage
     from pip._internal.utils.hashes import Hashes
 
@@ -23,6 +24,15 @@ if MYPY_CHECK_RUNNING:
 class Link(KeyBasedCompareMixin):
     """Represents a parsed link from a Package Index's simple URL
     """
+
+    __slots__ = [
+        "_parsed_url",
+        "_url",
+        "comes_from",
+        "requires_python",
+        "yanked_reason",
+        "cache_link_parsing",
+    ]
 
     def __init__(
         self,

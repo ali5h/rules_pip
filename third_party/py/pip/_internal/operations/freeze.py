@@ -1,7 +1,3 @@
-# The following comment should be removed at some point in the future.
-# mypy: strict-optional=False
-# mypy: disallow-untyped-defs=False
-
 from __future__ import absolute_import
 
 import collections
@@ -22,20 +18,25 @@ from pip._internal.utils.direct_url_helpers import (
     direct_url_as_pep440_direct_reference,
     dist_get_direct_url,
 )
-from pip._internal.utils.misc import (
-    dist_is_editable,
-    get_installed_distributions,
-)
+from pip._internal.utils.misc import dist_is_editable, get_installed_distributions
 from pip._internal.utils.typing import MYPY_CHECK_RUNNING
 
 if MYPY_CHECK_RUNNING:
     from typing import (
-        Iterator, Optional, List, Container, Set, Dict, Tuple, Iterable, Union
+        Container,
+        Dict,
+        Iterable,
+        Iterator,
+        List,
+        Optional,
+        Set,
+        Tuple,
+        Union,
     )
+
+    from pip._vendor.pkg_resources import Distribution, Requirement
+
     from pip._internal.cache import WheelCache
-    from pip._vendor.pkg_resources import (
-        Distribution, Requirement
-    )
 
     RequirementInfo = Tuple[Optional[Union[str, Requirement]], bool, List[str]]
 
@@ -46,8 +47,8 @@ logger = logging.getLogger(__name__)
 def freeze(
     requirement=None,  # type: Optional[List[str]]
     find_links=None,  # type: Optional[List[str]]
-    local_only=None,  # type: Optional[bool]
-    user_only=None,  # type: Optional[bool]
+    local_only=False,  # type: bool
+    user_only=False,  # type: bool
     paths=None,  # type: Optional[List[str]]
     isolated=False,  # type: bool
     wheel_cache=None,  # type: Optional[WheelCache]
@@ -60,10 +61,13 @@ def freeze(
     for link in find_links:
         yield '-f {}'.format(link)
     installations = {}  # type: Dict[str, FrozenRequirement]
-    for dist in get_installed_distributions(local_only=local_only,
-                                            skip=(),
-                                            user_only=user_only,
-                                            paths=paths):
+
+    for dist in get_installed_distributions(
+            local_only=local_only,
+            skip=(),
+            user_only=user_only,
+            paths=paths
+    ):
         try:
             req = FrozenRequirement.from_dist(dist)
         except RequirementParseError as exc:
@@ -96,13 +100,13 @@ def freeze(
                             line.strip().startswith('#') or
                             line.startswith((
                                 '-r', '--requirement',
-                                '-Z', '--always-unzip',
                                 '-f', '--find-links',
                                 '-i', '--index-url',
                                 '--pre',
                                 '--trusted-host',
                                 '--process-dependency-links',
-                                '--extra-index-url'))):
+                                '--extra-index-url',
+                                '--use-feature'))):
                         line = line.rstrip()
                         if line not in emitted_options:
                             emitted_options.add(line)
@@ -184,7 +188,7 @@ def get_requirement_info(dist):
 
     location = os.path.normcase(os.path.abspath(dist.location))
 
-    from pip._internal.vcs import vcs, RemoteNotFoundError
+    from pip._internal.vcs import RemoteNotFoundError, vcs
     vcs_backend = vcs.get_backend_for_dir(location)
 
     if vcs_backend is None:
@@ -266,6 +270,7 @@ class FrozenRequirement(object):
         return cls(dist.project_name, req, editable, comments=comments)
 
     def __str__(self):
+        # type: () -> str
         req = self.req
         if self.editable:
             req = '-e {}'.format(req)

@@ -16,9 +16,6 @@ import warnings
 import time
 import collections
 
-from setuptools.extern import six
-from setuptools.extern.six.moves import map
-
 from setuptools import Command
 from setuptools.command.sdist import sdist
 from setuptools.command.sdist import walk_revctrl
@@ -32,6 +29,7 @@ from setuptools.glob import glob
 
 from setuptools.extern import packaging
 from setuptools import SetuptoolsDeprecationWarning
+
 
 def translate_pattern(glob):
     """
@@ -113,7 +111,7 @@ def translate_pattern(glob):
             pat += sep
 
     pat += r'\Z'
-    return re.compile(pat, flags=re.MULTILINE|re.DOTALL)
+    return re.compile(pat, flags=re.MULTILINE | re.DOTALL)
 
 
 class InfoCommon:
@@ -125,12 +123,17 @@ class InfoCommon:
         return safe_name(self.distribution.get_name())
 
     def tagged_version(self):
-        version = self.distribution.get_version()
-        # egg_info may be called more than once for a distribution,
-        # in which case the version string already contains all tags.
-        if self.vtags and version.endswith(self.vtags):
-            return safe_version(version)
-        return safe_version(version + self.vtags)
+        return safe_version(self._maybe_tag(self.distribution.get_version()))
+
+    def _maybe_tag(self, version):
+        """
+        egg_info may be called more than once for a distribution,
+        in which case the version string already contains all tags.
+        """
+        return (
+            version if self.vtags and version.endswith(self.vtags)
+            else version + self.vtags
+        )
 
     def tags(self):
         version = ''
@@ -207,11 +210,11 @@ class egg_info(InfoCommon, Command):
             list(
                 parse_requirements(spec % (self.egg_name, self.egg_version))
             )
-        except ValueError:
+        except ValueError as e:
             raise distutils.errors.DistutilsOptionError(
                 "Invalid distribution name or version syntax: %s-%s" %
                 (self.egg_name, self.egg_version)
-            )
+            ) from e
 
         if self.egg_base is None:
             dirs = self.distribution.package_dir
@@ -266,8 +269,7 @@ class egg_info(InfoCommon, Command):
         to the file.
         """
         log.info("writing %s to %s", what, filename)
-        if not six.PY2:
-            data = data.encode("utf-8")
+        data = data.encode("utf-8")
         if not self.dry_run:
             f = open(filename, 'wb')
             f.write(data)
@@ -637,14 +639,16 @@ def warn_depends_obsolete(cmd, basename, filename):
 
 def _write_requirements(stream, reqs):
     lines = yield_lines(reqs or ())
-    append_cr = lambda line: line + '\n'
+
+    def append_cr(line):
+        return line + '\n'
     lines = map(append_cr, lines)
     stream.writelines(lines)
 
 
 def write_requirements(cmd, basename, filename):
     dist = cmd.distribution
-    data = six.StringIO()
+    data = io.StringIO()
     _write_requirements(data, dist.install_requires)
     extras_require = dist.extras_require or {}
     for extra in sorted(extras_require):
@@ -684,12 +688,12 @@ def write_arg(cmd, basename, filename, force=False):
 def write_entries(cmd, basename, filename):
     ep = cmd.distribution.entry_points
 
-    if isinstance(ep, six.string_types) or ep is None:
+    if isinstance(ep, str) or ep is None:
         data = ep
     elif ep is not None:
         data = []
         for section, contents in sorted(ep.items()):
-            if not isinstance(contents, six.string_types):
+            if not isinstance(contents, str):
                 contents = EntryPoint.parse_group(section, contents)
                 contents = '\n'.join(sorted(map(str, contents.values())))
             data.append('[%s]\n%s\n\n' % (section, contents))
@@ -703,7 +707,8 @@ def get_pkg_info_revision():
     Get a -r### off of PKG-INFO Version in case this is an sdist of
     a subversion revision.
     """
-    warnings.warn("get_pkg_info_revision is deprecated.", EggInfoDeprecationWarning)
+    warnings.warn(
+        "get_pkg_info_revision is deprecated.", EggInfoDeprecationWarning)
     if os.path.exists('PKG-INFO'):
         with io.open('PKG-INFO') as f:
             for line in f:
@@ -714,4 +719,4 @@ def get_pkg_info_revision():
 
 
 class EggInfoDeprecationWarning(SetuptoolsDeprecationWarning):
-    """Class for warning about deprecations in eggInfo in setupTools. Not ignored by default, unlike DeprecationWarning."""
+    """Deprecated behavior warning for EggInfo, bypassing suppression."""
