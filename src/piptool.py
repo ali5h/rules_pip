@@ -3,15 +3,11 @@ import logging
 import os
 import re
 import sys
+from collections import OrderedDict
 
 from pip._internal.network.session import PipSession
+from pip._internal.req.constructors import install_req_from_parsed_requirement
 from pip._internal.req.req_file import parse_requirements
-from pip._vendor.packaging.requirements import Requirement
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    OrderedDict = dict
 
 
 def clean_name(name):
@@ -48,7 +44,7 @@ def as_tuple(preq):
     Pulls out the (name: str, version:str, extras:(str)) tuple from
     the pinned ParsedRequirement.
     """
-    req = Requirement(preq.requirement)
+    req = install_req_from_parsed_requirement(preq)
     if not is_pinned_requirement(req, preq.is_editable):
         raise TypeError(
             (
