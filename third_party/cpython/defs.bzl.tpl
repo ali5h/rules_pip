@@ -1,4 +1,5 @@
 PYTHON_COPTS = [
+    "-fPIC",
     %{CFLAGS}
 ]
 
@@ -6,27 +7,22 @@ PYTHON_LINKOPTS = [
     %{LDFLAGS}
 ]
 
-EXTENSION_SUFFIX = %{EXTENSION_SUFFIX}
+EXTENSION_SUFFIX = "%{EXTENSION_SUFFIX}"
 
-fPIC = "-fPIC"
+HEADERS =  "@%{CPYTHON}//:python_headers"
 
 def py_extension(name, **kwargs):
-    copts = kwargs.pop('copts', [])
-    copts += PYTHON_COPTS
-    if fPIC not in copts:
-        copts.append(fPIC)
-
-    linkopts = kwargs.pop('linkopts', [])
-    deps = kwargs.pop('deps', [])
-    extension_name = name + EXTENSION_SUFFIX
+    extension_name = name + ".so"
+    copts = kwargs.pop('copts', []) + PYTHON_COPTS
+    linkopts = kwargs.pop('linkopts', []) + PYTHON_LINKOPTS
+    deps = kwargs.pop('deps', []) + [HEADERS]
     native.cc_binary(
         name = extension_name,
         copts = copts,
-        deps = deps + [
-            "@%{CPYTHON}//:lib"
-        ],
+        deps = deps,
+        linkopts = linkopts,
         linkshared = True,
-        linkstatic = True,
+        linkstatic = kwargs.pop('linkstatic', True),
         **kwargs,
     )
     native.py_library(

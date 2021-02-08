@@ -3,11 +3,7 @@ licenses(["restricted"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "lib",
-    srcs = glob([
-        "lib/*.a",
-        "lib/*.so",
-    ]),
+    name = "python_headers",
     hdrs = glob(["include/**/*.h"]),
     includes = ["include"],
 )

@@ -56,101 +56,105 @@ def _execute(
         ]))
     return result
 
-def _get_bin(repository_ctx, bin_name):
-    """Gets the bin path."""
-    bin_path = repository_ctx.which(bin_name)
-    if bin_path != None:
-        return str(bin_path)
-    _fail("Cannot find %s in PATH" % bin_name)
-
-def _get_python_include(repository_ctx, python_bin):
+def _get_python_include(repository_ctx):
     """Gets the python include path."""
     result = _execute(
         repository_ctx,
         [
-            python_bin,
+            repository_ctx.attr.interpreter,
             "-c",
-            "from __future__ import print_function;" +
-            "from distutils import sysconfig;" +
-            "print(sysconfig.get_python_inc())",
+            "import sysconfig;print(sysconfig.get_path('include'))",
         ],
         error_msg = "Problem getting python include path.",
     )
     return repository_ctx.path(result.stdout.splitlines()[0])
 
-def _get_python_import_lib_path(repository_ctx, python_bin):
-    """Get Python import library"""
+def _get_python_lib_path(repository_ctx):
+    """Get python cflags"""
     result = _execute(
         repository_ctx,
         [
-            python_bin,
+            repository_ctx.attr.interpreter,
             "-c",
-            "from __future__ import print_function;" +
-            "from distutils import sysconfig; import os; " +
-            'print(os.path.join(*sysconfig.get_config_vars("LIBDIR", "LDLIBRARY")))',
+            "import sysconfig;print(sysconfig.get_config_var('LIBPL'))",
         ],
-        error_msg = "Problem getting python import library.",
+        error_msg = "Problem getting lib path.",
     )
-
     return repository_ctx.path(result.stdout.splitlines()[0])
 
-def _get_python_version(repository_ctx, python_bin):
-    """Get Python import library"""
+def _get_python_config_cflags(repository_ctx):
+    """Get python cflags"""
     result = _execute(
         repository_ctx,
         [
-            python_bin,
+            repository_ctx.attr.interpreter,
             "-c",
-            "from __future__ import print_function;" +
-            "import sys;" +
-            "print(sys.version_info[0]);" +
-            "print(sys.version_info[1])",
+            """
+import sysconfig
+for flag in sysconfig.get_config_var('CFLAGS').split():
+  print(flag)
+""",
         ],
-        error_msg = "Problem getting python versiony.",
+        error_msg = "Problem getting cflags.",
     )
+    return [
+        flag
+        for flag in result.stdout.splitlines()
+        if flag != "-Wstrict-prototypes"
+    ]
 
-    return [int(v) for v in result.stdout.splitlines()]
-
-def _get_python_config_flags(repository_ctx, python_config_bin, flags):
+def _get_python_config_ldflags(repository_ctx):
+    """Get python ldflags"""
     result = _execute(
         repository_ctx,
         [
-            python_config_bin,
-            flags,
+            repository_ctx.attr.interpreter,
+            "-c",
+            """
+import sysconfig
+getvar = sysconfig.get_config_var
+libs = ['-L' + getvar('LIBPL')]
+libpython = getvar('LIBPYTHON')
+if libpython:
+    libs.append(libpython)
+libs.extend(getvar('LIBS').split() + getvar('SYSLIBS').split())
+for lib in libs:
+  print(lib)
+""",
         ],
-        error_msg = "Problem getting python-config %s." % flags,
-    ).stdout.splitlines()[0]
-    return ",\n    ".join([
-        '"%s"' % flag
-        for flag in result.split(" ")
-        if not flag.startswith("-I")
-    ])
+        error_msg = "Problem getting ldflags.",
+    )
+    return result.stdout.splitlines()
+
+def _get_python_config_ext(repository_ctx):
+    """Get python extension suffix."""
+    result = _execute(
+        repository_ctx,
+        [
+            repository_ctx.attr.interpreter,
+            "-c",
+            "import sysconfig;print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')",
+        ],
+        error_msg = "Problem getting extension suffix.",
+    )
+    return result.stdout.splitlines()[0]
 
 def _python_autoconf_impl(repository_ctx):
     """Implementation of the python_autoconf repository rule.
 
     Creates the repository containing files set up to build with Python.
     """
-    python_bin = _get_bin(repository_ctx, repository_ctx.attr.interpreter)
-    python_include = _get_python_include(repository_ctx, python_bin)
-    python_import_lib = _get_python_import_lib_path(repository_ctx, python_bin)
-    python_version = _get_python_version(repository_ctx, python_bin)
     if repository_ctx.attr.devel:
-        python_config_bin = _get_bin(repository_ctx, repository_ctx.attr.interpreter + "-config")
-        python_cflags = _get_python_config_flags(repository_ctx, python_config_bin, "--cflags")
-        python_ldflags = _get_python_config_flags(repository_ctx, python_config_bin, "--ldflags")
-        if python_version[0] > 2:
-            python_extension_suffix = _get_python_config_flags(repository_ctx, python_config_bin, "--extension-suffix")
-        else:
-            python_extension_suffix = '".so"'
-        repository_ctx.symlink(python_bin, "python")
+        python_include = _get_python_include(repository_ctx)
+        python_cflags = _get_python_config_cflags(repository_ctx)
+        python_ldflags = _get_python_config_ldflags(repository_ctx)
+        python_extension_suffix = _get_python_config_ext(repository_ctx)
         repository_ctx.symlink(python_include, "include")
-        repository_ctx.symlink(python_import_lib, "lib/" + python_import_lib.basename)
         _tpl(repository_ctx, "BUILD")
         _tpl(repository_ctx, "defs.bzl", substitutions = {
             "%{CPYTHON}": repository_ctx.name,
-            "%{CFLAGS}": python_cflags,
-            "%{LDFLAGS}": python_ldflags,
+            "%{CFLAGS}": ",\n    ".join(['"%s"' % flag for flag in python_cflags]),
+            "%{LDFLAGS}": ",\n    ".join(['"%s"' % flag for flag in python_ldflags]),
             "%{EXTENSION_SUFFIX}": python_extension_suffix,
         })
 
