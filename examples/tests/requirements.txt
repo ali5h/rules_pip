@@ -53,7 +53,7 @@ toml==0.10.2
 tqdm==4.56.0
 typing-extensions==3.7.4.3
 typing-inspect==0.6.0
-urllib3==1.26.4
+urllib3==1.26.5
 wasabi==0.8.2
 xgboost==1.2.0
 
