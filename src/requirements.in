@@ -1,5 +1,5 @@
 pkginfo
-pip==20.3.3
+pip==21.1
 pip-tools==5.5.0
 setuptools
 wheel
