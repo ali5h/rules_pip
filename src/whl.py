@@ -245,6 +245,12 @@ py_library(
         {dependencies}
     ],
 )
+
+filegroup(
+    name = "distinfo",
+    srcs = glob(["*.dist-info/**"]),
+)
+
 {extras}""".format(
         requirements=args.requirements,
         dependencies=",".join(['requirement("%s")' % d for d in dependencies(pkg)]),
