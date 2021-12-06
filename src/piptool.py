@@ -75,8 +75,14 @@ def repository_name(repo_prefix, name, version, python_version):
 
 
 def whl_library(
-    name, extras, repo_name, pip_repo_name, python_interpreter, timeout, quiet,
-    replace_requirements
+    name,
+    extras,
+    repo_name,
+    pip_repo_name,
+    python_interpreter,
+    timeout,
+    quiet,
+    replace_requirements,
 ):
     """Generate whl_library snippets for a package and its extras.
 
@@ -170,13 +176,13 @@ def main():
         "--replace_requirement",
         action="append",
         default=[],
-        help="Specified to replace pip dependencies with bazel targets. Example: " +
-        "--replace_requirement=protobuf=@com_google_protobuf//:protobuf_python",
+        help="Specified to replace pip dependencies with bazel targets. Example: "
+        + "--replace_requirement=protobuf=@com_google_protobuf//:protobuf_python",
     )
     args = parser.parse_args()
 
     reqs = sorted(get_requirements(args.input), key=as_tuple)
-    replace_requirements = dict(rep.split('=') for rep in args.replace_requirement)
+    replace_requirements = dict(rep.split("=") for rep in args.replace_requirement)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = OrderedDict()
     whl_libraries = []

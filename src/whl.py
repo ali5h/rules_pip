@@ -198,8 +198,8 @@ def main():
         "--replace_requirement",
         action="append",
         default=[],
-        help="Specified to replace pip dependencies with bazel targets. Example: " +
-        "--replace_requirement=protobuf=@com_google_protobuf//:protobuf_python",
+        help="Specified to replace pip dependencies with bazel targets. Example: "
+        + "--replace_requirement=protobuf=@com_google_protobuf//:protobuf_python",
     )
 
     args, pip_args = parser.parse_known_args()
@@ -231,7 +231,7 @@ py_library(
     # --replace_requirement is in that order, replacement=requirement, but we
     # want to flip this for the dict lookup to work, since we want to replace
     # the requirement with the replacement, after all.
-    replacements = dict(reversed(rep.split('=')) for rep in args.replace_requirement)
+    replacements = dict(reversed(rep.split("=")) for rep in args.replace_requirement)
 
     result = """
 package(default_visibility = ["//visibility:public"])
@@ -258,10 +258,14 @@ py_library(
 )
 {extras}""".format(
         requirements=args.requirements,
-        dependencies=",".join(['requirement("%s")' % d for d in dependencies(pkg)]),
-        dependencies=",\n        ".join([
-            '"%s"' % replacements[d] if d in replacements else 'requirement("%s")' % d
-            for d in dependencies(pkg)]),
+        dependencies=",\n        ".join(
+            [
+                '"%s"' % replacements[d]
+                if d in replacements
+                else 'requirement("%s")' % d
+                for d in dependencies(pkg)
+            ]
+        ),
         extras=extras,
     )
 
