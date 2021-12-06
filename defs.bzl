@@ -37,7 +37,7 @@ def _pip_import_impl(repository_ctx):
         if result.return_code:
             fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
 
-    result = _execute(repository_ctx, [
+    args = [
         python_interpreter,
         repository_ctx.path(repository_ctx.attr._script),
         "--name",
@@ -52,7 +52,12 @@ def _pip_import_impl(repository_ctx):
         str(repository_ctx.attr.repo_prefix),
         "--quiet",
         str(repository_ctx.attr.quiet),
-    ], quiet = repository_ctx.attr.quiet)
+    ]
+
+    for label, pipdep in repository_ctx.attr.replace_requirements.items():
+        args += ["--replace_requirement=%s=%s" % (label, pipdep)]
+
+    result = _execute(repository_ctx, args, quiet = repository_ctx.attr.quiet)
     if result.return_code:
         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
 
@@ -77,6 +82,7 @@ The prefix for the bazel repository name.
         "compile": attr.bool(
             default = False,
         ),
+        "replace_requirements": attr.label_keyed_string_dict(),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
         "_script": attr.label(
             executable = True,
@@ -128,6 +134,9 @@ def _whl_impl(repository_ctx):
             "--extras=%s" % extra
             for extra in repository_ctx.attr.extras
         ]
+    for label, pipdep in repository_ctx.attr.replace_requirements.items():
+        args += ["--replace_requirement=%s=%s" % (label, pipdep)]
+
     args += pip_args
 
     result = _execute(repository_ctx, args, quiet = repository_ctx.attr.quiet)
@@ -149,6 +158,7 @@ If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "pip_args": attr.string_list(default = []),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
+        "replace_requirements": attr.label_keyed_string_dict(),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
