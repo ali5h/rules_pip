@@ -70,10 +70,10 @@ pip_import(
     timeout = 1200,
     compile = False,
     python_interpreter = "python3.8",
-    requirements = "//tests:requirements.txt",
     replace_requirements = {
         "@pytz//:pkg": "pytz",
     },
+    requirements = "//tests:requirements.txt",
 )
 
 load(
