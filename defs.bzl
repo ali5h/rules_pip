@@ -82,7 +82,19 @@ The prefix for the bazel repository name.
         "compile": attr.bool(
             default = False,
         ),
-        "replace_requirements": attr.label_keyed_string_dict(),
+        "replace_requirements": attr.label_keyed_string_dict(doc = """
+Specify to replace certain pip dependencies with bazel dependencies.
+
+pip_import(
+    name = "pipdeps",
+    ...
+    replace_requirements = {
+        "@com_google_protobuf//:protobuf_python": "protobuf",
+    },
+)
+
+This replaces "protobuf" with the bazel version even for indirect dependencies on it.
+"""),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
         "_script": attr.label(
             executable = True,
