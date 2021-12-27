@@ -69,10 +69,10 @@ pip_import(
     name = "piptool_deps_tests_3",
     timeout = 1200,
     compile = False,
-    python_interpreter = "python3.8",
     overrides = {
         "@pytz//:pkg": "pytz",
     },
+    python_interpreter = "python3.8",
     requirements = "//tests:requirements.txt",
 )
 
