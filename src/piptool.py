@@ -82,7 +82,7 @@ def whl_library(
     python_interpreter,
     timeout,
     quiet,
-    replace_requirements,
+    overrides,
 ):
     """Generate whl_library snippets for a package and its extras.
 
@@ -94,7 +94,7 @@ def whl_library(
         python_interpreter:
         timeout: timeout for pip actions
         quiet: makes command run in quiet mode
-        replace_requirements: map from requirement to replacement label
+        overrides: map from requirement to replacement label
     Returns:
       str: whl_library rule definition
     """
@@ -110,7 +110,7 @@ def whl_library(
         pip_args = pip_args,
         timeout = {timeout},
         quiet = {quiet},
-        replace_requirements = {replace_requirements},
+        overrides = {overrides},
     )""".format(
         name=name,
         repo_name=repo_name,
@@ -119,7 +119,7 @@ def whl_library(
         extras=",".join(['"%s"' % extra for extra in extras]),
         timeout=timeout,
         quiet=quiet,
-        replace_requirements=replace_requirements,
+        overrides=overrides,
     )
 
 
@@ -173,16 +173,16 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--replace_requirement",
+        "--override",
         action="append",
         default=[],
         help="Specified to replace pip dependencies with bazel targets. Example: "
-        + "--replace_requirement=protobuf=@com_google_protobuf//:protobuf_python",
+        + "--override=protobuf=@com_google_protobuf//:protobuf_python",
     )
     args = parser.parse_args()
 
     reqs = sorted(get_requirements(args.input), key=as_tuple)
-    replace_requirements = dict(rep.split("=") for rep in args.replace_requirement)
+    overrides = dict(rep.split("=") for rep in args.override)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = OrderedDict()
     whl_libraries = []
@@ -203,7 +203,7 @@ def main():
                 sys.executable,
                 args.timeout,
                 args.quiet,
-                replace_requirements,
+                overrides,
             )
         )
 

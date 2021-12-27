@@ -54,8 +54,8 @@ def _pip_import_impl(repository_ctx):
         str(repository_ctx.attr.quiet),
     ]
 
-    for label, pipdep in repository_ctx.attr.replace_requirements.items():
-        args += ["--replace_requirement=%s=%s" % (label, pipdep)]
+    for label, pipdep in repository_ctx.attr.overrides.items():
+        args += ["--overrides=%s=%s" % (pipdep, label)]
 
     result = _execute(repository_ctx, args, quiet = repository_ctx.attr.quiet)
     if result.return_code:
@@ -82,13 +82,13 @@ The prefix for the bazel repository name.
         "compile": attr.bool(
             default = False,
         ),
-        "replace_requirements": attr.label_keyed_string_dict(doc = """
+        "overrides": attr.label_keyed_string_dict(doc = """
 Specify to replace certain pip dependencies with bazel dependencies.
 
 pip_import(
     name = "pipdeps",
     ...
-    replace_requirements = {
+    overrides = {
         "@com_google_protobuf//:protobuf_python": "protobuf",
     },
 )
@@ -146,8 +146,8 @@ def _whl_impl(repository_ctx):
             "--extras=%s" % extra
             for extra in repository_ctx.attr.extras
         ]
-    for label, pipdep in repository_ctx.attr.replace_requirements.items():
-        args += ["--replace_requirement=%s=%s" % (label, pipdep)]
+    for label, pipdep in repository_ctx.attr.overrides.items():
+        args += ["--overrides=%s=%s" % (label, pipdep)]
 
     args += pip_args
 
@@ -170,7 +170,7 @@ If the label is specified it will overwrite the python_interpreter attribute.
 """),
         "pip_args": attr.string_list(default = []),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
-        "replace_requirements": attr.label_keyed_string_dict(),
+        "overrides": attr.label_keyed_string_dict(),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
