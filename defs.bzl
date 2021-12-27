@@ -55,7 +55,7 @@ def _pip_import_impl(repository_ctx):
     ]
 
     for label, pipdep in repository_ctx.attr.overrides.items():
-        args += ["--overrides=%s=%s" % (pipdep, label)]
+        args += ["--override=%s=%s" % (pipdep, label)]
 
     result = _execute(repository_ctx, args, quiet = repository_ctx.attr.quiet)
     if result.return_code:
@@ -147,7 +147,7 @@ def _whl_impl(repository_ctx):
             for extra in repository_ctx.attr.extras
         ]
     for label, pipdep in repository_ctx.attr.overrides.items():
-        args += ["--overrides=%s=%s" % (label, pipdep)]
+        args += ["--override=%s=%s" % (label, pipdep)]
 
     args += pip_args
 
