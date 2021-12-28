@@ -194,6 +194,13 @@ def main():
         action="append",
         help="The set of extras for which to generate library targets.",
     )
+    parser.add_argument(
+        "--override",
+        action="append",
+        default=[],
+        help="Specified to replace pip dependencies with bazel targets. Example: "
+        + "--override=protobuf=@com_google_protobuf//:protobuf_python",
+    )
 
     args, pip_args = parser.parse_known_args()
 
@@ -221,6 +228,8 @@ py_library(
         extras_list.append(_get_numpy_headers(args.directory))
 
     extras = "\n".join(extras_list)
+    # args.override looks like a list of requirement=replacement
+    replacements = dict(rep.split("=") for rep in args.override)
 
     result = """
 package(default_visibility = ["//visibility:public"])
@@ -253,7 +262,14 @@ filegroup(
 
 {extras}""".format(
         requirements=args.requirements,
-        dependencies=",".join(['requirement("%s")' % d for d in dependencies(pkg)]),
+        dependencies=",\n        ".join(
+            [
+                '"%s"' % replacements[d]
+                if d in replacements
+                else 'requirement("%s")' % d
+                for d in dependencies(pkg)
+            ]
+        ),
         extras=extras,
     )
 

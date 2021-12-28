@@ -75,7 +75,14 @@ def repository_name(repo_prefix, name, version, python_version):
 
 
 def whl_library(
-    name, extras, repo_name, pip_repo_name, python_interpreter, timeout, quiet
+    name,
+    extras,
+    repo_name,
+    pip_repo_name,
+    python_interpreter,
+    timeout,
+    quiet,
+    overrides,
 ):
     """Generate whl_library snippets for a package and its extras.
 
@@ -87,6 +94,7 @@ def whl_library(
         python_interpreter:
         timeout: timeout for pip actions
         quiet: makes command run in quiet mode
+        overrides: map from requirement to replacement label
     Returns:
       str: whl_library rule definition
     """
@@ -102,6 +110,7 @@ def whl_library(
         pip_args = pip_args,
         timeout = {timeout},
         quiet = {quiet},
+        overrides = {overrides},
     )""".format(
         name=name,
         repo_name=repo_name,
@@ -110,6 +119,7 @@ def whl_library(
         extras=",".join(['"%s"' % extra for extra in extras]),
         timeout=timeout,
         quiet=quiet,
+        overrides=overrides,
     )
 
 
@@ -162,9 +172,17 @@ def main():
         type=bool,
         required=True,
     )
+    parser.add_argument(
+        "--override",
+        action="append",
+        default=[],
+        help="Specified to replace pip dependencies with bazel targets. Example: "
+        + "--override=protobuf=@com_google_protobuf//:protobuf_python",
+    )
     args = parser.parse_args()
 
     reqs = sorted(get_requirements(args.input), key=as_tuple)
+    overrides = dict(rep.split("=") for rep in args.override)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = OrderedDict()
     whl_libraries = []
@@ -185,6 +203,7 @@ def main():
                 sys.executable,
                 args.timeout,
                 args.quiet,
+                overrides,
             )
         )
 

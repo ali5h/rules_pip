@@ -13,3 +13,7 @@ def test_xgboost():
 def test_numpy():
     import numpy
     import tests._test
+
+
+def test_pytz():
+    import pytz
