@@ -248,7 +248,7 @@ class MSVCCompiler(CCompiler) :
         # Future releases of Python 3.x will include all past
         # versions of vcruntime*.dll for compatibility.
         self.compile_options = [
-            '/nologo', '/Ox', '/W3', '/GL', '/DNDEBUG', '/MD'
+            '/nologo', '/O2', '/W3', '/GL', '/DNDEBUG', '/MD'
         ]
 
         self.compile_options_debug = [
@@ -527,7 +527,7 @@ class MSVCCompiler(CCompiler) :
             return
         warnings.warn(
             "Fallback spawn triggered. Please update distutils monkeypatch.")
-        with unittest.mock.patch('os.environ', env):
+        with unittest.mock.patch.dict('os.environ', env):
             bag.value = super().spawn(cmd)
 
     # -- Miscellaneous methods -----------------------------------------

@@ -28,9 +28,10 @@ class Installed(Distribution):
         opj = os.path.join
         if self.package is not None:
             package = self.package.__package__
-            if package is None:
+            if package in ('', None):
                 package = self.package.__name__
-            pattern = '%s*.egg-info' % package
+            egg_pattern = '%s*.egg-info' % package
+            dist_pattern = '%s*.dist-info' % package
             file = getattr(self.package, '__file__', None)
             if file is not None:
                 candidates = []
@@ -39,13 +40,21 @@ class Installed(Distribution):
                 for entry in sys.path:
                     if file.startswith(entry):
                         _add_candidate(opj(entry, 'EGG-INFO')) # egg?
-                        _add_candidate(opj(entry, pattern)) # dist-installed?
+                        _add_candidate(opj(entry, egg_pattern))
+                        _add_candidate(opj(entry, dist_pattern))
                 dir, name = os.path.split(self.package.__file__)
-                _add_candidate(opj(dir, pattern))
-                _add_candidate(opj(dir, '..', pattern))
+                _add_candidate(opj(dir, egg_pattern))
+                _add_candidate(opj(dir, '..', egg_pattern))
+                _add_candidate(opj(dir, dist_pattern))
+                _add_candidate(opj(dir, '..', dist_pattern))
                 for candidate in candidates:
                     if os.path.isdir(candidate):
-                        path = opj(candidate, 'PKG-INFO')
+                        if candidate.lower().endswith("egg-info"):
+                            path = opj(candidate, 'PKG-INFO')
+                        elif candidate.endswith("dist-info"):
+                            path = opj(candidate, 'METADATA')
+                        else:  # pragma: NO COVER
+                            continue
                     else:
                         path = candidate
                     if os.path.exists(path):

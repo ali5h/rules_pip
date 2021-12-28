@@ -17,12 +17,12 @@ class SDist(Distribution):
         if not os.path.exists(fqn):
             raise ValueError('No such file: %s' % fqn)
 
-        if fqn.endswith('.zip'):
+        if zipfile.is_zipfile(fqn):
             archive = zipfile.ZipFile(fqn)
             names = archive.namelist()
             def read_file(name):
                 return archive.read(name)
-        elif fqn.endswith('gz') or fqn.endswith('bz2'):
+        elif tarfile.is_tarfile(fqn):
             archive = tarfile.TarFile.open(fqn)
             names = archive.getnames()
             def read_file(name):

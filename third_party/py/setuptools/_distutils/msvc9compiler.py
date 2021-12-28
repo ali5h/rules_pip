@@ -291,8 +291,6 @@ def query_vcvarsall(version, arch="x86"):
 
 # More globals
 VERSION = get_build_version()
-if VERSION < 8.0:
-    raise DistutilsPlatformError("VC %0.1f is not supported by this module" % VERSION)
 # MACROS = MacroExpander(VERSION)
 
 class MSVCCompiler(CCompiler) :
@@ -339,6 +337,8 @@ class MSVCCompiler(CCompiler) :
     def initialize(self, plat_name=None):
         # multi-init means we would need to check platform same each time...
         assert not self.initialized, "don't init multiple times"
+        if self.__version < 8.0:
+            raise DistutilsPlatformError("VC %0.1f is not supported by this module" % self.__version)
         if plat_name is None:
             plat_name = get_platform()
         # sanity check for platforms to prevent obscure errors later.
@@ -399,13 +399,13 @@ class MSVCCompiler(CCompiler) :
 
         self.preprocess_options = None
         if self.__arch == "x86":
-            self.compile_options = [ '/nologo', '/Ox', '/MD', '/W3',
+            self.compile_options = [ '/nologo', '/O2', '/MD', '/W3',
                                      '/DNDEBUG']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3',
                                           '/Z7', '/D_DEBUG']
         else:
             # Win64
-            self.compile_options = [ '/nologo', '/Ox', '/MD', '/W3', '/GS-' ,
+            self.compile_options = [ '/nologo', '/O2', '/MD', '/W3', '/GS-' ,
                                      '/DNDEBUG']
             self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3', '/GS-',
                                           '/Z7', '/D_DEBUG']

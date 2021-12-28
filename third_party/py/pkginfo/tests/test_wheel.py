@@ -72,6 +72,15 @@ class WheelTests(unittest.TestCase):
         self._checkSample(wheel, filename)
         self._checkClassifiers(wheel)
 
+    def test_ctor_w_valid_wheel_w_description_header(self):
+        import os
+        d, _ = os.path.split(__file__)
+        filename = ('%s/../../docs/examples/'
+                    'distlib-0.3.1-py2.py3-none-any.whl') % d
+        wheel = self._makeOne(filename, metadata_version='1.1')
+        self.assertEqual(wheel.metadata_version, '1.1')
+        self.assertTrue(wheel.description)
+
     def test_ctor_w_valid_installed_wheel(self):
         import os
         import shutil
