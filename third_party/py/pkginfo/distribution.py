@@ -63,12 +63,17 @@ HEADER_ATTRS_2_1 = HEADER_ATTRS_1_2 + ( # PEP 566
     ('Description-Content-Type', 'description_content_type', False)
 )
 
+HEADER_ATTRS_2_2 = HEADER_ATTRS_2_1 + ( # PEP 643
+    ('Dynamic', 'dynamic', True),
+)
+
 HEADER_ATTRS = {
     '1.0': HEADER_ATTRS_1_0,
     '1.1': HEADER_ATTRS_1_1,
     '1.2': HEADER_ATTRS_1_2,
     '2.0': HEADER_ATTRS_2_0,
     '2.1': HEADER_ATTRS_2_1,
+    '2.2': HEADER_ATTRS_2_2,
 }
 
 class Distribution(object):
@@ -103,6 +108,8 @@ class Distribution(object):
     # version 2.1
     provides_extras = ()
     description_content_type = None
+    # version 2.2
+    dynamic = ()
 
     def extractMetadata(self):
         data = self.read()

@@ -1,6 +1,6 @@
 """Import pip requirements into Bazel."""
 
-pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/easy_install.py")
+pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/BUILD")
 
 def _execute(repository_ctx, arguments, quiet = False):
     pip_vendor = str(repository_ctx.path(pip_vendor_label).dirname)

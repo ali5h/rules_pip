@@ -97,6 +97,13 @@ class InstalledTests(unittest.TestCase):
         self.assertEqual(installed.package, pkginfo.tests.funny)
         self.assertEqual(installed.package_name, 'pkginfo.tests.funny')
 
+    def test_ctor_w_dist_info(self):
+        import wheel
+        installed = self._makeOne('wheel')
+        self.assertEqual(installed.metadata_version, '2.1')
+        self.assertEqual(installed.package, wheel)
+        self.assertEqual(installed.package_name, 'wheel')
+
     def test_namespaced_pkg_installed_via_setuptools(self):
         import os
         import sys

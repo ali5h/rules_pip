@@ -38,6 +38,7 @@ import itertools
 import inspect
 import ntpath
 import posixpath
+import importlib
 from pkgutil import get_importer
 
 try:
@@ -112,6 +113,11 @@ def parse_version(v):
     try:
         return packaging.version.Version(v)
     except packaging.version.InvalidVersion:
+        warnings.warn(
+            f"{v} is an invalid version and will not be supported in "
+            "a future release",
+            PkgResourcesDeprecationWarning,
+        )
         return packaging.version.LegacyVersion(v)
 
 
@@ -696,7 +702,8 @@ class WorkingSet:
             keys2.append(dist.key)
         self._added_new(dist)
 
-    def resolve(self, requirements, env=None, installer=None,
+    # FIXME: 'WorkingSet.resolve' is too complex (11)
+    def resolve(self, requirements, env=None, installer=None,  # noqa: C901
                 replace_conflicting=False, extras=None):
         """List all distributions needed to (recursively) meet `requirements`
 
@@ -1477,7 +1484,7 @@ class NullProvider:
     def _validate_resource_path(path):
         """
         Validate the resource paths according to the docs.
-        https://setuptools.readthedocs.io/en/latest/pkg_resources.html#basic-resource-access
+        https://setuptools.pypa.io/en/latest/pkg_resources.html#basic-resource-access
 
         >>> warned = getfixture('recwarn')
         >>> warnings.simplefilter('always')
@@ -1745,7 +1752,8 @@ class ZipProvider(EggProvider):
         timestamp = time.mktime(date_time)
         return timestamp, size
 
-    def _extract_resource(self, manager, zip_path):
+    # FIXME: 'ZipProvider._extract_resource' is too complex (12)
+    def _extract_resource(self, manager, zip_path):  # noqa: C901
 
         if zip_path in self._index():
             for name in self._index()[zip_path]:
@@ -1983,7 +1991,7 @@ def find_eggs_in_zip(importer, path_item, only=False):
             dists = find_eggs_in_zip(zipimport.zipimporter(subpath), subpath)
             for dist in dists:
                 yield dist
-        elif subitem.lower().endswith('.dist-info'):
+        elif subitem.lower().endswith(('.dist-info', '.egg-info')):
             subpath = os.path.join(path_item, subitem)
             submeta = EggMetadata(zipimport.zipimporter(subpath))
             submeta.egg_info = subpath
@@ -2007,7 +2015,7 @@ def _by_version_descending(names):
 
     >>> names = 'bar', 'foo', 'Python-2.7.10.egg', 'Python-2.7.2.egg'
     >>> _by_version_descending(names)
-    ['Python-2.7.10.egg', 'Python-2.7.2.egg', 'foo', 'bar']
+    ['Python-2.7.10.egg', 'Python-2.7.2.egg', 'bar', 'foo']
     >>> names = 'Setuptools-1.2.3b1.egg', 'Setuptools-1.2.3.egg'
     >>> _by_version_descending(names)
     ['Setuptools-1.2.3.egg', 'Setuptools-1.2.3b1.egg']
@@ -2015,13 +2023,22 @@ def _by_version_descending(names):
     >>> _by_version_descending(names)
     ['Setuptools-1.2.3.post1.egg', 'Setuptools-1.2.3b1.egg']
     """
+    def try_parse(name):
+        """
+        Attempt to parse as a version or return a null version.
+        """
+        try:
+            return packaging.version.Version(name)
+        except Exception:
+            return packaging.version.Version('0')
+
     def _by_version(name):
         """
         Parse each component of the filename
         """
         name, ext = os.path.splitext(name)
         parts = itertools.chain(name.split('-'), [ext])
-        return [packaging.version.parse(part) for part in parts]
+        return [try_parse(part) for part in parts]
 
     return sorted(names, key=_by_version, reverse=True)
 
@@ -2209,7 +2226,7 @@ def _handle_ns(packageName, path_item):
     if subpath is not None:
         path = module.__path__
         path.append(subpath)
-        loader.load_module(packageName)
+        importlib.import_module(packageName)
         _rebuild_mod_path(path, packageName, module)
     return subpath
 
@@ -2379,18 +2396,19 @@ def _set_parent_ns(packageName):
         setattr(sys.modules[parent], name, sys.modules[packageName])
 
 
-def yield_lines(strs):
-    """Yield non-empty/non-comment lines of a string or sequence"""
-    if isinstance(strs, str):
-        for s in strs.splitlines():
-            s = s.strip()
-            # skip blank lines/comments
-            if s and not s.startswith('#'):
-                yield s
-    else:
-        for ss in strs:
-            for s in yield_lines(ss):
-                yield s
+def _nonblank(str):
+    return str and not str.startswith('#')
+
+
+@functools.singledispatch
+def yield_lines(iterable):
+    """Yield valid lines of a string or iterable"""
+    return itertools.chain.from_iterable(map(yield_lines, iterable))
+
+
+@yield_lines.register(str)
+def _(text):
+    return filter(_nonblank, map(str.strip, text.splitlines()))
 
 
 MODULE = re.compile(r"\w+(\.\w+)*$").match
@@ -2858,7 +2876,8 @@ class Distribution:
         """Return the EntryPoint object for `group`+`name`, or ``None``"""
         return self.get_entry_map(group).get(name)
 
-    def insert_on(self, path, loc=None, replace=False):
+    # FIXME: 'Distribution.insert_on' is too complex (13)
+    def insert_on(self, path, loc=None, replace=False):  # noqa: C901
         """Ensure self.location is on path
 
         If replace=False (default):
@@ -3235,6 +3254,15 @@ def _initialize(g=globals()):
     )
 
 
+class PkgResourcesDeprecationWarning(Warning):
+    """
+    Base class for warning about deprecations in ``pkg_resources``
+
+    This class is not derived from ``DeprecationWarning``, and as such is
+    visible by default.
+    """
+
+
 @_call_aside
 def _initialize_master_working_set():
     """
@@ -3273,12 +3301,3 @@ def _initialize_master_working_set():
     # match order
     list(map(working_set.add_entry, sys.path))
     globals().update(locals())
-
-
-class PkgResourcesDeprecationWarning(Warning):
-    """
-    Base class for warning about deprecations in ``pkg_resources``
-
-    This class is not derived from ``DeprecationWarning``, and as such is
-    visible by default.
-    """

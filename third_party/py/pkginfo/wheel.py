@@ -59,4 +59,5 @@ class Wheel(Distribution):
         super(Wheel, self).parse(data)
         fp = io.StringIO(must_decode(data))
         msg = parse(fp)
-        self.description = msg.get_payload()
+        if self.description is None:
+            self.description = msg.get_payload()

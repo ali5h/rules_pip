@@ -3,9 +3,15 @@ import os
 import re
 import importlib
 import warnings
+import contextlib
 
 
 is_pypy = '__pypy__' in sys.builtin_module_names
+
+
+warnings.filterwarnings('ignore',
+                        r'.+ distutils\b.+ deprecated',
+                        DeprecationWarning)
 
 
 def warn_distutils_present():
@@ -37,17 +43,20 @@ def enabled():
     """
     Allow selection of distutils by environment variable.
     """
-    which = os.environ.get('SETUPTOOLS_USE_DISTUTILS', 'stdlib')
+    which = os.environ.get('SETUPTOOLS_USE_DISTUTILS', 'local')
     return which == 'local'
 
 
 def ensure_local_distutils():
     clear_distutils()
-    distutils = importlib.import_module('setuptools._distutils')
-    distutils.__name__ = 'distutils'
-    sys.modules['distutils'] = distutils
 
-    # sanity check that submodules load as expected
+    # With the DistutilsMetaFinder in place,
+    # perform an import to cause distutils to be
+    # loaded from setuptools._distutils. Ref #2906.
+    with shim():
+        importlib.import_module('distutils')
+
+    # check that submodules load as expected
     core = importlib.import_module('distutils.core')
     assert '_distutils' in core.__file__, core.__file__
 
@@ -97,19 +106,40 @@ class DistutilsMetaFinder:
         clear_distutils()
         self.spec_for_distutils = lambda: None
 
-    @staticmethod
-    def pip_imported_during_build():
+    @classmethod
+    def pip_imported_during_build(cls):
         """
         Detect if pip is being imported in a build script. Ref #2355.
         """
         import traceback
         return any(
-            frame.f_globals['__file__'].endswith('setup.py')
+            cls.frame_file_is_setup(frame)
             for frame, line in traceback.walk_stack(None)
         )
 
+    @staticmethod
+    def frame_file_is_setup(frame):
+        """
+        Return True if the indicated frame suggests a setup.py file.
+        """
+        # some frames may not have __file__ (#2940)
+        return frame.f_globals.get('__file__', '').endswith('setup.py')
+
 
 DISTUTILS_FINDER = DistutilsMetaFinder()
+
+
+def ensure_shim():
+    DISTUTILS_FINDER in sys.meta_path or add_shim()
+
+
+@contextlib.contextmanager
+def shim():
+    add_shim()
+    try:
+        yield
+    finally:
+        remove_shim()
 
 
 def add_shim():
