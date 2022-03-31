@@ -229,7 +229,7 @@ py_library(
 
     extras = "\n".join(extras_list)
     # args.override looks like a list of requirement=replacement
-    replacements = dict(rep.split("=") for rep in args.override)
+    overrides = dict(rep.split("=") for rep in args.override)
 
     result = """
 package(default_visibility = ["//visibility:public"])
@@ -264,8 +264,8 @@ filegroup(
         requirements=args.requirements,
         dependencies=",\n        ".join(
             [
-                '"%s"' % replacements[d]
-                if d in replacements
+                '"%s"' % overrides[d]
+                if d in overrides
                 else 'requirement("%s")' % d
                 for d in dependencies(pkg)
             ]
