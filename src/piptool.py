@@ -243,7 +243,7 @@ def requirement(name, target=None):
   return req
 """.format(
                 whl_libraries="\n".join(whl_libraries),
-                mappings={k.lower(): v for k, v in mappings.items()},
+                mappings=str({k.lower(): v for k, v in whl_targets.items()}),
             )
         )
 
