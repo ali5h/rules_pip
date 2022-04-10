@@ -212,7 +212,7 @@ def main():
             )
         )
 
-    mappings=",\n  ".join(
+    mappings = ",\n  ".join(
         '"%s": "%s"' % (name, target) for name, target in whl_targets.items()
     )
 
@@ -253,7 +253,9 @@ def requirement(name, target=None):
 [alias(name=name, actual=pkg,  visibility=["//visibility:public"]) for name, pkg in {{
   {mappings}
 }}.items()]
-""".format(mappings=mappings)
+""".format(
+                mappings=mappings
+            )
         )
 
 

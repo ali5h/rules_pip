@@ -264,9 +264,7 @@ filegroup(
         requirements=args.requirements,
         dependencies=",\n        ".join(
             [
-                '"%s"' % overrides[d]
-                if d in overrides
-                else 'requirement("%s")' % d
+                '"%s"' % overrides[d] if d in overrides else 'requirement("%s")' % d
                 for d in dependencies(pkg)
             ]
         ),
