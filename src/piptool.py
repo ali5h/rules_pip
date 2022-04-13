@@ -189,23 +189,31 @@ def main():
     for req in reqs:
         name, version, extras = as_tuple(req)
         repo_name = repository_name(args.repo_prefix, name, version, python_version)
-        whl_targets["%s" % name] = "@%s//:pkg" % repo_name
-        # For every extra that is possible from this requirements.txt
-        for extra in extras:
-            whl_targets["%s[%s]" % (name, extra)] = "@%s//:%s" % (repo_name, extra)
+        if req in overrides:
+            # No whl_library is created, and no extras for overrides.
+            whl_targets["%s" % name] = overrides[req]
+        else:
+            whl_targets["%s" % name] = "@%s//:pkg" % repo_name
+            # For every extra that is possible from this requirements.txt
+            for extra in extras:
+                whl_targets["%s[%s]" % (name, extra)] = "@%s//:%s" % (repo_name, extra)
 
-        whl_libraries.append(
-            whl_library(
-                name,
-                extras,
-                repo_name,
-                args.name,
-                sys.executable,
-                args.timeout,
-                args.quiet,
-                overrides,
+            whl_libraries.append(
+                whl_library(
+                    name,
+                    extras,
+                    repo_name,
+                    args.name,
+                    sys.executable,
+                    args.timeout,
+                    args.quiet,
+                    overrides,
+                )
             )
-        )
+
+    mappings = ",\n  ".join(
+        '"%s": "%s"' % (name, target) for name, target in whl_targets.items()
+    )
 
     with open(args.output, "w") as _f:
         _f.write(
@@ -234,11 +242,9 @@ def requirement(name, target=None):
   return req
 """.format(
                 whl_libraries="\n".join(whl_libraries),
-                mappings=",".join(
-                    (
-                        '"%s": "%s"' % (name.lower(), whl_targets[name])
-                        for name in whl_targets
-                    )
+                mappings=", ".join(
+                    '"%s": "%s"' % (name.lower(), target)
+                    for name, target in whl_targets.items()
                 ),
             )
         )
@@ -250,9 +256,7 @@ def requirement(name, target=None):
   {mappings}
 }}.items()]
 """.format(
-                mappings=",\n  ".join(
-                    '"%s": "%s"' % (name, whl_targets[name]) for name in whl_targets
-                )
+                mappings=mappings
             )
         )
 
