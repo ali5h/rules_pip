@@ -1,0 +1,12 @@
+diff -ur __init__.py __init__.py
+--- __init__.py        2021-10-01 20:36:22.000000000 -0700
++++ __init__.py  2022-04-27 19:57:53.080260440 -0700
+@@ -8,6 +8,8 @@
+ on how to use these modules.
+ '''
+
++NEW_ATTR = 1
++
+ import sys
+ import datetime
+ import os.path
