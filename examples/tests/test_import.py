@@ -17,3 +17,4 @@ def test_numpy():
 
 def test_pytz():
     import pytz
+    assert pytz.NEW_ATTR
