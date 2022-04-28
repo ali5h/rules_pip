@@ -147,7 +147,7 @@ def _whl_impl(repository_ctx):
             for extra in repository_ctx.attr.extras
         ]
     for label, pipdep in repository_ctx.attr.overrides.items():
-        args += ["--override=%s=%s" % (label, pipdep)]
+        args += ["--override=%s=%s" % (pipdep, label)]
 
     args += pip_args
 
