@@ -47,6 +47,9 @@ local_repository(
     path = "..",
 )
 
+# pytz is pulled in as a small dependency for testing the `overrides` functionality.
+# We patch it to add an attribute that doesn't exist upstream, so we can test that
+# pytz is overridden correctly.
 http_archive(
     name = "pytz",
     build_file_content = """
