@@ -82,7 +82,7 @@ def whl_library(
     python_interpreter,
     timeout,
     quiet,
-    overrides,
+    req_to_overrides,
 ):
     """Generate whl_library snippets for a package and its extras.
 
@@ -94,7 +94,7 @@ def whl_library(
         python_interpreter:
         timeout: timeout for pip actions
         quiet: makes command run in quiet mode
-        overrides: map from requirement to replacement label
+        req_to_overrides: map from requirement to replacement label
     Returns:
       str: whl_library rule definition
     """
@@ -119,7 +119,7 @@ def whl_library(
         extras=",".join(['"%s"' % extra for extra in extras]),
         timeout=timeout,
         quiet=quiet,
-        overrides=overrides,
+        overrides={label: req for req, label in req_to_overrides.items()},
     )
 
 
@@ -177,21 +177,22 @@ def main():
         action="append",
         default=[],
         help="Specified to replace pip dependencies with bazel targets. Example: "
-        + "--override=protobuf=@com_google_protobuf//:protobuf_python",
+        + "--override=@com_google_protobuf//:protobuf_python=protobuf",
     )
     args = parser.parse_args()
 
     reqs = sorted(get_requirements(args.input), key=as_tuple)
-    overrides = dict(rep.split("=") for rep in args.override)
+    # args.overrides is label=req, we want {req: label}
+    req_to_overrides = dict(tuple(reversed(rep.split("="))) for rep in args.override)
     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
     whl_targets = OrderedDict()
     whl_libraries = []
     for req in reqs:
         name, version, extras = as_tuple(req)
         repo_name = repository_name(args.repo_prefix, name, version, python_version)
-        if req in overrides:
+        if name in req_to_overrides:
             # No whl_library is created, and no extras for overrides.
-            whl_targets["%s" % name] = overrides[req]
+            whl_targets["%s" % name] = req_to_overrides[name]
         else:
             whl_targets["%s" % name] = "@%s//:pkg" % repo_name
             # For every extra that is possible from this requirements.txt
@@ -207,7 +208,7 @@ def main():
                     sys.executable,
                     args.timeout,
                     args.quiet,
-                    overrides,
+                    req_to_overrides,
                 )
             )
 
@@ -242,10 +243,7 @@ def requirement(name, target=None):
   return req
 """.format(
                 whl_libraries="\n".join(whl_libraries),
-                mappings=", ".join(
-                    '"%s": "%s"' % (name.lower(), target)
-                    for name, target in whl_targets.items()
-                ),
+                mappings=mappings,
             )
         )
 

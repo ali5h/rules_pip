@@ -199,7 +199,7 @@ def main():
         action="append",
         default=[],
         help="Specified to replace pip dependencies with bazel targets. Example: "
-        + "--override=protobuf=@com_google_protobuf//:protobuf_python",
+        + "--override=@com_google_protobuf//:protobuf_python=protobuf",
     )
 
     args, pip_args = parser.parse_known_args()
@@ -228,7 +228,7 @@ py_library(
         extras_list.append(_get_numpy_headers(args.directory))
 
     extras = "\n".join(extras_list)
-    # args.override looks like a list of requirement=replacement
+    # args.override looks like a list of replacement=requirement
     overrides = dict(rep.split("=") for rep in args.override)
 
     result = """
