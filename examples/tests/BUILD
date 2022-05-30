@@ -31,3 +31,9 @@ py_extension(
         requirement("numpy", "//:headers"),
     ],
 )
+
+sh_test(
+    name = "test_binary",
+    srcs = ["test_binary.sh"],
+    data = [requirement("chardet", "//:chardetect")],
+)
