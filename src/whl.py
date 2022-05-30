@@ -10,6 +10,7 @@ from pip._internal.commands import create_command
 from pip._vendor import pkg_resources
 
 import pkginfo
+import installer
 
 
 # https://github.com/dillon-giacoppo/rules_python_external/blob/master/tools/wheel_wrapper.py
@@ -165,6 +166,21 @@ cc_library(
     )
 
 
+def get_entry_points(directory):
+    dist_info = glob.glob(os.path.join(directory, "*.dist-info"))[0]
+    entry_points_path = os.path.join(dist_info, "entry_points.txt")
+    entry_points_mapping = {}
+    if not os.path.exists(entry_points_path):
+        return entry_points_mapping
+
+    with open(entry_points_path) as f:
+        entry_points = installer.utils.parse_entrypoints(f.read())
+        for script, module, attribute, script_section in entry_points:
+            if script_section == "console":
+                entry_points_mapping[script] = (module, attribute)
+        return entry_points_mapping
+
+
 def main():
     logging.basicConfig()
     parser = argparse.ArgumentParser(
@@ -223,6 +239,28 @@ py_library(
         for extra in args.extras or []
     ]
 
+    entry_point_list = [
+        """
+genrule(
+    name = "copy_{script}",
+    srcs = ["bin/{script}"],
+    outs = ["bin/{script}.py"],
+    cmd = "cp $(SRCS) $(OUTS)",
+)
+
+py_binary(
+    name = "{script}",
+    srcs = ["bin/{script}.py"],
+    imports = ["."],
+    deps = [":pkg"],
+)
+""".format(
+            script=script
+        )
+        for script, val in get_entry_points(args.directory).items()
+    ]
+    entry_points_str = "\n".join(entry_point_list)
+
     # we treat numpy in a special way, inject a rule for numpy headers
     if args.package == "numpy":
         extras_list.append(_get_numpy_headers(args.directory))
@@ -260,6 +298,8 @@ filegroup(
     srcs = glob(["*.dist-info/**"]),
 )
 
+{entry_points}
+
 {extras}""".format(
         requirements=args.requirements,
         dependencies=",\n        ".join(
@@ -268,6 +308,7 @@ filegroup(
                 for d in dependencies(pkg)
             ]
         ),
+        entry_points=entry_points_str,
         extras=extras,
     )
 
