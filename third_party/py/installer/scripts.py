@@ -3,7 +3,11 @@
 import io
 import shlex
 import zipfile
-from importlib.resources import read_binary
+try:
+    from importlib.resources import read_binary
+except ImportError:
+    from importlib_resources import read_binary
+
 from typing import TYPE_CHECKING, Mapping, Optional, Tuple
 
 from installer import _scripts
