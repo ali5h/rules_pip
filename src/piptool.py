@@ -248,7 +248,7 @@ def entry_point(name, entry_point=None):
   entry_point = entry_point or name
   return requirement(name, "//:{entry_point_prefix}" + entry_point)
 """.format(
-                entry_point_prefix=ENTRY_POINT_PREFIX
+                entry_point_prefix=ENTRY_POINT_PREFIX,
                 whl_libraries="\n".join(whl_libraries),
                 mappings=mappings,
             )
