@@ -252,6 +252,7 @@ genrule(
 py_binary(
     name = "{entrypoint_prefix}{script}",
     srcs = ["bin/{script}.py"],
+    main = "bin/{script}.py",
     imports = ["."],
     deps = [":pkg"],
 )
