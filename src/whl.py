@@ -245,14 +245,14 @@ py_library(
 genrule(
     name = "{entrypoint_prefix}copy_{script}",
     srcs = ["bin/{script}"],
-    outs = ["bin/{script}.py"],
+    outs = ["bin/{entrypoint_prefix}{script}.py"],
     cmd = "cp $(SRCS) $(OUTS)",
 )
 
 py_binary(
     name = "{entrypoint_prefix}{script}",
-    srcs = ["bin/{script}.py"],
-    main = "bin/{script}.py",
+    srcs = ["bin/{entrypoint_prefix}{script}.py"],
+    main = "bin/{entrypoint_prefix}{script}.py",
     imports = ["."],
     deps = [":pkg"],
 )
