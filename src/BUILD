@@ -22,6 +22,7 @@ py_binary(
     srcs = ["piptool.py"],
     python_version = "PY3",
     deps = [
+        ":whllib",
         "//third_party/py:pypi_vendor",
     ],
 )

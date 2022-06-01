@@ -9,7 +9,7 @@ from pip._internal.network.session import PipSession
 from pip._internal.req.constructors import install_req_from_parsed_requirement
 from pip._internal.req.req_file import parse_requirements
 
-ENTRYPOINT_PREFIX="entry_point_"
+from src import whl
 
 
 def clean_name(name):
@@ -248,7 +248,7 @@ def entry_point(name, entry_point=None):
   entry_point = entry_point or name
   return requirement(name, "//:{entry_point_prefix}" + entry_point)
 """.format(
-                entry_point_prefix=ENTRY_POINT_PREFIX,
+                entry_point_prefix=whl.ENTRY_POINT_PREFIX,
                 whl_libraries="\n".join(whl_libraries),
                 mappings=mappings,
             )
