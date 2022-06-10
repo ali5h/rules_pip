@@ -242,17 +242,11 @@ py_library(
 
     entry_point_list = [
         """
-genrule(
-    name = "{entrypoint_prefix}copy_{script}",
-    srcs = ["bin/{script}"],
-    outs = ["bin/{entrypoint_prefix}{script}.py"],
-    cmd = "cp $(SRCS) $(OUTS)",
-)
 
 py_binary(
-    name = "{entrypoint_prefix}{script}",
-    srcs = ["bin/{entrypoint_prefix}{script}.py"],
-    main = "bin/{entrypoint_prefix}{script}.py",
+    name = "bin/{script}",
+    srcs = ["bin/{script}.py"],
+    main = "bin/{script}.py",
     imports = ["."],
     deps = [":pkg"],
 )
