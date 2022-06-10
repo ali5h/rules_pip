@@ -12,7 +12,7 @@ from pip._vendor import pkg_resources
 import pkginfo
 import installer
 
-ENTRYPOINT_PREFIX = "bin/"
+ENTRYPOINT_PREFIX = "bin-"
 
 # https://github.com/dillon-giacoppo/rules_python_external/blob/master/tools/wheel_wrapper.py
 def configure_reproducible_wheels():
@@ -242,9 +242,15 @@ py_library(
 
     entry_point_list = [
         """
+genrule(
+    name = "{entrypoint_prefix}copy_{script}",
+    srcs = ["bin/{script}"],
+    outs = ["bin/{script}.py"],
+    cmd = "cp $(SRCS) $(OUTS)",
+)
 
 py_binary(
-    name = "bin/{script}",
+    name = "{entrypoint_prefix}{script}",
     srcs = ["bin/{script}.py"],
     main = "bin/{script}.py",
     imports = ["."],
