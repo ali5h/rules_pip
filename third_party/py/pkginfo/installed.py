@@ -32,13 +32,13 @@ class Installed(Distribution):
                 package = self.package.__name__
             egg_pattern = '%s*.egg-info' % package
             dist_pattern = '%s*.dist-info' % package
-            file = getattr(self.package, '__file__', None)
-            if file is not None:
+            pkg_file = getattr(self.package, '__file__', None)
+            if pkg_file is not None:
                 candidates = []
                 def _add_candidate(where):
                     candidates.extend(glob.glob(where))
                 for entry in sys.path:
-                    if file.startswith(entry):
+                    if pkg_file.startswith(entry):
                         _add_candidate(opj(entry, 'EGG-INFO')) # egg?
                         _add_candidate(opj(entry, egg_pattern))
                         _add_candidate(opj(entry, dist_pattern))

@@ -431,7 +431,7 @@ class DistributionTests(unittest.TestCase):
                    'Provides-Extra: tex')
         self.assertEqual(list(dist.provides_extras), ['pdf', 'tex'])
 
-    def test_parse_Provides_Extra_single(self):
+    def test_parse_Distribution_Content_Type_single(self):
         dist = self._makeOne('2.1')
         dist.parse('Description-Content-Type: text/plain')
         self.assertEqual(dist.description_content_type, 'text/plain')

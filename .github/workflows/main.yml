@@ -36,6 +36,11 @@ jobs:
           "${GITHUB_WORKSPACE}/bin/buildifier" -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
           black --check --exclude 'third_party' .
 
+      - name: Check third party python packages
+        run: |
+          bin/upgrade-reqs
+          test -z "$(git status -u --porcelain)"
+
       - name: Test Rules
         run: |
           "${GITHUB_WORKSPACE}/bin/bazel" info

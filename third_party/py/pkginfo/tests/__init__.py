@@ -4,7 +4,8 @@
 def _checkSample(testcase, installed):
     try:
         import pkg_resources
-    except ImportError: # no setuptools :(
+    except ImportError: # pragma: NO COVER
+        # no setuptools :(
         pass
     else:
         version = pkg_resources.require('pkginfo')[0].version

@@ -122,10 +122,8 @@ class UnpackedMixin(object):
     def _getTopDirectory(self):
         import os
         topnames = os.listdir(self.__tmpdir)
-        if len(topnames) == 1:
-            return os.path.join(self.__tmpdir, topnames[0])
-        else:
-            return self.__tmpdir
+        assert len(topnames) == 1
+        return os.path.join(self.__tmpdir, topnames[0])
 
     def _getLoadFilename(self):
         return self._getTopDirectory()
