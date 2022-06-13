@@ -5,6 +5,10 @@ on:
   pull_request:
     branches: [ master ]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -22,29 +26,35 @@ jobs:
 
       - name: Install tools
         run: |
-          mkdir -p "${GITHUB_WORKSPACE}/bin/"
+          mkdir -p temp
           python --version
-          curl -Lo "${GITHUB_WORKSPACE}/bin/bazel" "https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64"
-          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
-          curl -Lo "${GITHUB_WORKSPACE}/bin/buildifier" "https://github.com/bazelbuild/buildtools/releases/download/3.5.0/buildifier"
-          chmod +x "${GITHUB_WORKSPACE}/bin/buildifier"
+          curl -Lo temp/bazel "https://github.com/bazelbuild/bazelisk/releases/download/v1.11.0/bazelisk-linux-amd64"
+          chmod +x temp/bazel
+          curl -Lo temp/buildifier "https://github.com/bazelbuild/buildtools/releases/download/5.1.0/buildifier-linux-amd64"
+          chmod +x temp/buildifier
           pip install black==22.3.0
-          pip uninstall -y pip setuptools wheels
+          pip install -r src/requirements.txt
 
       - name: Style
         run: |
-          "${GITHUB_WORKSPACE}/bin/buildifier" -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
+          temp/buildifier -mode=check $(find . -type f -name '*.bzl' -o -name WORKSPACE -o -name BUILD)
           black --check --exclude 'third_party' .
+
+      - name: Check third party python packages
+        run: |
+          bin/update-reqs
+          git status -u --porcelain
+          test -z "$(git status -u --porcelain)"
 
       - name: Test Rules
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" info
-          "${GITHUB_WORKSPACE}/bin/bazel" build //...
-          "${GITHUB_WORKSPACE}/bin/bazel" test //...
+          temp/bazel info
+          temp/bazel build //...
+          temp/bazel test //...
 
       - name: Test Examples
+        working-directory: examples
         run: |
-          cd examples
-          "${GITHUB_WORKSPACE}/bin/bazel" info
-          "${GITHUB_WORKSPACE}/bin/bazel" build //...
-          "${GITHUB_WORKSPACE}/bin/bazel" test //...
+          ../temp/bazel info
+          ../temp/bazel build //...
+          ../temp/bazel test //...

@@ -4,3 +4,4 @@ pip-tools==6.4.0
 setuptools
 wheel
 mock
+installer
