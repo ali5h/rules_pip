@@ -1,0 +1,45 @@
+#!/bin/bash -eux
+
+usage() {
+  echo "Usage: $0" 1>&2
+  exit 1
+}
+
+
+export CUSTOM_COMPILE_COMMAND="$(basename "$0")"
+export PYTHONPATH="${PWD}/third_party/py"
+
+bazel run //src:compile -- \
+      --allow-unsafe \
+      --generate-hashes \
+      --no-emit-trusted-host \
+      --no-annotate \
+      --no-emit-find-links \
+      --no-header \
+      --no-emit-index-url \
+      --output-file="${PWD}/src/requirements.txt" \
+      --upgrade \
+      "${PWD}/src/requirements.in"
+
+rm -rf third_party/py
+pip install -t third_party/py -r src/requirements.txt --no-deps
+cat > third_party/py/BUILD <<EOF
+py_library(
+    name = "pypi_vendor",
+    srcs = glob(["**/*.py"]),
+    data = glob(
+        ["**/*"],
+        exclude = [
+            "**/*.py",
+            "**/*.pyc",
+            "**/* *",
+            "BUILD",
+            "WORKSPACE",
+            "bin/*",
+            "__pycache__",
+        ],
+    ),
+    imports = [""],
+    visibility = ["//visibility:public"],
+)
+EOF

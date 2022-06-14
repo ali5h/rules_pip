@@ -8,3 +8,4 @@ RECORD
 
 user.bazelrc
 wheels
+temp/

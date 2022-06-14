@@ -54,10 +54,3 @@ class Wheel(Distribution):
             close()
 
         raise ValueError('No METADATA in archive: %s' % fqn)
-
-    def parse(self, data):
-        super(Wheel, self).parse(data)
-        fp = io.StringIO(must_decode(data))
-        msg = parse(fp)
-        if self.description is None:
-            self.description = msg.get_payload()

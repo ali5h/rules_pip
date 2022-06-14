@@ -81,6 +81,18 @@ class WheelTests(unittest.TestCase):
         self.assertEqual(wheel.metadata_version, '1.1')
         self.assertTrue(wheel.description)
 
+    def test_ctor_w_valid_wheel_w_description_body(self):
+        import os
+        d, _ = os.path.split(__file__)
+        filename = ('%s/../../docs/examples/'
+                    'testlp1974172-0.0.0-py3-none-any.whl') % d
+        wheel = self._makeOne(filename, metadata_version='2.1')
+        self.assertEqual(wheel.metadata_version, '2.1')
+        self.assertIn(
+            "https://bugs.launchpad.net/pkginfo/+bug/1885458",
+            wheel.description
+        )
+
     def test_ctor_w_valid_installed_wheel(self):
         import os
         import shutil
