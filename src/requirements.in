@@ -4,4 +4,5 @@ pip-tools==6.4.0
 setuptools
 wheel
 mock
-installer
+installer==0.4.0
+importlib_resources

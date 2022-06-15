@@ -2,23 +2,30 @@
 
 import posixpath
 from io import BytesIO
-from typing import Dict, Tuple, cast
 
+from installer._compat.typing import TYPE_CHECKING, cast
 from installer.destinations import WheelDestination
 from installer.exceptions import InvalidWheelSource
 from installer.records import RecordEntry
 from installer.sources import WheelSource
 from installer.utils import SCHEME_NAMES, Scheme, parse_entrypoints, parse_metadata_file
 
+if TYPE_CHECKING:
+    from typing import Dict, Tuple
+
+    from installer._compat.typing import Binary, FSPath
+
+
 __all__ = ["install"]
 
 
-def _process_WHEEL_file(source: WheelSource) -> Scheme:
+def _process_WHEEL_file(source):
+    # type: (WheelSource) -> Scheme
     """Process the WHEEL file, from ``source``.
 
     Returns the scheme that the archive root should go in.
     """
-    stream = source.read_dist_info("WHEEL")
+    stream = source.read_dist_info(u"WHEEL")
     metadata = parse_metadata_file(stream)
 
     # Ensure compatibility with this wheel version.
@@ -28,14 +35,13 @@ def _process_WHEEL_file(source: WheelSource) -> Scheme:
 
     # Determine where archive root should go.
     if metadata["Root-Is-Purelib"] == "true":
-        return cast(Scheme, "purelib")
+        return cast("Scheme", "purelib")
     else:
-        return cast(Scheme, "platlib")
+        return cast("Scheme", "platlib")
 
 
-def _determine_scheme(
-    path: str, source: WheelSource, root_scheme: Scheme
-) -> Tuple[Scheme, str]:
+def _determine_scheme(path, source, root_scheme):
+    # type: (FSPath, WheelSource, Scheme) -> Tuple[Scheme, FSPath]
     """Determine which scheme to place given path in, from source."""
     data_dir = source.data_dir
 
@@ -55,17 +61,14 @@ def _determine_scheme(
             break
 
     if scheme_name not in SCHEME_NAMES:
-        msg_fmt = "{path} is not contained in a valid .data subdirectory."
+        msg_fmt = u"{path} is not contained in a valid .data subdirectory."
         raise InvalidWheelSource(source, msg_fmt.format(path=path))
 
-    return cast(Scheme, scheme_name), posixpath.join(*reversed(parts[:-1]))
+    return cast("Scheme", scheme_name), posixpath.join(*reversed(parts[:-1]))
 
 
-def install(
-    source: WheelSource,
-    destination: WheelDestination,
-    additional_metadata: Dict[str, bytes],
-) -> None:
+def install(source, destination, additional_metadata):
+    # type: (WheelSource, WheelDestination, Dict[str, Binary]) -> None
     """Install wheel described by ``source`` into ``destination``.
 
     :param source: wheel to install.
@@ -77,10 +80,10 @@ def install(
     root_scheme = _process_WHEEL_file(source)
 
     # RECORD handling
-    record_file_path = posixpath.join(source.dist_info_dir, "RECORD")
+    record_file_path = posixpath.join(source.dist_info_dir, u"RECORD")
     written_records = []
 
-    # Write the entry_points based scripts.
+    # Write the entry-points based scripts.
     if "entry_points.txt" in source.dist_info_filenames:
         entrypoints_text = source.read_dist_info("entry_points.txt")
         for name, module, attr, section in parse_entrypoints(entrypoints_text):
@@ -93,7 +96,7 @@ def install(
             written_records.append((Scheme("scripts"), record))
 
     # Write all the files from the wheel.
-    for record_elements, stream, is_executable in source.get_contents():
+    for record_elements, stream in source.get_contents():
         source_record = RecordEntry.from_elements(*record_elements)
         path = source_record.path
         # Skip the RECORD, which is written at the end, based on this info.
@@ -110,7 +113,6 @@ def install(
             scheme=scheme,
             path=destination_path,
             stream=stream,
-            is_executable=is_executable,
         )
         written_records.append((scheme, record))
 
@@ -123,7 +125,6 @@ def install(
                 scheme=root_scheme,
                 path=path,
                 stream=other_stream,
-                is_executable=is_executable,
             )
         written_records.append((root_scheme, record))
 
