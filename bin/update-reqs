@@ -18,7 +18,6 @@ bazel run //src:compile -- \
       --no-header \
       --no-emit-index-url \
       --output-file="${PWD}/src/requirements.txt" \
-      --upgrade \
       "${PWD}/src/requirements.in"
 
 rm -rf third_party/py
