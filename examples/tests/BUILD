@@ -1,7 +1,7 @@
 """tests"""
 
 load("@com_github_ali5h_rules_pip//:defs.bzl", "py_pytest_test")
-load("@piptool_deps_tests_3//:requirements.bzl", "requirement")
+load("@piptool_deps_tests_3//:requirements.bzl", "entry_point", "requirement")
 load("@cpython//:defs.bzl", "py_extension")
 
 # run the test using pytest
@@ -35,5 +35,5 @@ py_extension(
 sh_test(
     name = "test_binary",
     srcs = ["test_binary.sh"],
-    data = [requirement("chardet", "//:chardetect")],
+    data = [entry_point("chardet", "chardetect")],
 )

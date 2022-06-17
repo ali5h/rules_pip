@@ -9,6 +9,8 @@ from pip._internal.network.session import PipSession
 from pip._internal.req.constructors import install_req_from_parsed_requirement
 from pip._internal.req.req_file import parse_requirements
 
+import whl
+
 
 def clean_name(name):
     # Escape any illegal characters with underscore.
@@ -241,7 +243,12 @@ def requirement(name, target=None):
     pkg, _, _ = req.partition("//")
     req = pkg + target
   return req
+
+def entry_point(name, entry_point=None):
+  entry_point = entry_point or name
+  return requirement(name, "//:{entry_point_prefix}" + entry_point)
 """.format(
+                entry_point_prefix=whl.ENTRYPOINT_PREFIX,
                 whl_libraries="\n".join(whl_libraries),
                 mappings=mappings,
             )
