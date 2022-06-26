@@ -30,7 +30,7 @@ def _pip_import_impl(repository_ctx):
             "--build-isolation",
             "--no-emit-find-links",
             "--no-header",
-            "--no-index",
+            "--no-emit-index-url",
             "--no-annotate",
             repository_ctx.path("requirements.txt"),
         ], quiet = repository_ctx.attr.quiet)
