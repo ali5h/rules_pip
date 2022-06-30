@@ -242,7 +242,7 @@ def main():
     pkg = install_package(args.package, args.directory, pip_args)
 
     extensions = _parse_extensions(pkg.filename)
-    cc_import_names = [name.replace("/", "__") for name in extensions]
+    cc_import_names = [name.replace("/", "__").replace(".", "_") for name in extensions]
     cc_imports = [
         """
 cc_import(
