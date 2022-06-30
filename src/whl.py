@@ -52,6 +52,20 @@ def _create_nspkg_init(dirpath):
         nspkg.write("__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
 
 
+def _parse_extensions(dist_info):
+    record_path = os.path.join(dist_info, "RECORD")
+    extensions = []
+    if os.path.exists(record_path):
+        with open(record_path) as f:
+            for line in f:
+                if not line:
+                    continue
+                filename = line.split(",")[0].lower()
+                if filename.endswith(".dll") or filename.endswith(".so"):
+                    extensions.append(filename)
+    return extensions
+
+
 def install_package(pkg, directory, pip_args):
     """Downloads wheel for a package. Assumes python binary provided has
     pip and wheel package installed.
@@ -226,6 +240,20 @@ def main():
     configure_reproducible_wheels()
 
     pkg = install_package(args.package, args.directory, pip_args)
+
+    extensions = _parse_extensions(pkg.filename)
+    cc_import_names = [name.replace("/", "__") for name in extensions]
+    cc_imports = [
+        """
+cc_import(
+    name = "{name}",
+    shared_library = "{filename}",
+)""".format(
+            name=name, filename=filename
+        )
+        for name, filename in zip(cc_import_names, extensions)
+    ]
+
     extras_list = [
         """
 py_library(
@@ -279,7 +307,9 @@ load("{requirements}//:requirements.bzl", "requirement")
 py_library(
     name = "pkg",
     srcs = glob(["**/*.py"]),
-    data = glob(["**/*"], exclude = [
+    data = [
+        {cc_import_deps}
+    ] + glob(["**/*"], exclude = [
         "**/*.py",
         "**/*.pyc",
         "**/* *",
@@ -302,6 +332,8 @@ filegroup(
 
 {entry_points}
 
+{cc_imports}
+
 {extras}""".format(
         requirements=args.requirements,
         dependencies=",\n        ".join(
@@ -311,6 +343,10 @@ filegroup(
             ]
         ),
         entry_points=entry_points_str,
+        cc_import_deps=",\n        ".join(
+            '"{}"'.format(name) for name in cc_import_names
+        ),
+        cc_imports="\n".join(cc_imports),
         extras=extras,
     )
 
