@@ -316,6 +316,8 @@ py_library(
         "BUILD",
         "WORKSPACE",
         "__pycache__",
+        "**/*.so",
+        "**/*.dll",
     ]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
