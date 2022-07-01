@@ -85,6 +85,7 @@ def whl_library(
     timeout,
     quiet,
     req_to_overrides,
+    cc_import,
 ):
     """Generate whl_library snippets for a package and its extras.
 
@@ -97,6 +98,7 @@ def whl_library(
         timeout: timeout for pip actions
         quiet: makes command run in quiet mode
         req_to_overrides: map from requirement to replacement label
+        cc_import: use cc_import() or not
     Returns:
       str: whl_library rule definition
     """
@@ -113,6 +115,7 @@ def whl_library(
         timeout = {timeout},
         quiet = {quiet},
         overrides = {overrides},
+        cc_import = {cc_import},
     )""".format(
         name=name,
         repo_name=repo_name,
@@ -122,6 +125,7 @@ def whl_library(
         timeout=timeout,
         quiet=quiet,
         overrides={label: req for req, label in req_to_overrides.items()},
+        cc_import=cc_import,
     )
 
 
@@ -181,6 +185,11 @@ def main():
         help="Specified to replace pip dependencies with bazel targets. Example: "
         + "--override=@com_google_protobuf//:protobuf_python=protobuf",
     )
+    parser.add_argument(
+        "--cc_import",
+        action="store_true",
+        help="Use cc_import() for non-C-extension binaries",
+    )
     args = parser.parse_args()
 
     reqs = sorted(get_requirements(args.input), key=as_tuple)
@@ -211,6 +220,7 @@ def main():
                     args.timeout,
                     args.quiet,
                     req_to_overrides,
+                    args.cc_import,
                 )
             )
 

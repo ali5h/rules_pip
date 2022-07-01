@@ -78,6 +78,7 @@ pip_import(
     },
     python_interpreter = "python3.8",
     requirements = "//tests:requirements.txt",
+    cc_import = True,
 )
 
 load(
