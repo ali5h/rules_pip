@@ -52,16 +52,29 @@ def _create_nspkg_init(dirpath):
         nspkg.write("__path__ = __import__('pkgutil').extend_path(__path__, __name__)")
 
 
-def _parse_extensions(dist_info):
+def _parse_shared_libs(dist_info):
     record_path = os.path.join(dist_info, "RECORD")
     extensions = []
+
+    def is_shared_lib(filename):
+        filename = filename.lower()
+        is_dll = filename.endswith(".dll")
+        is_so = filename.endswith(".so") or ".so." in filename
+        is_extension = '.cpython' in filename
+        # with open("/tmp/x", "a") as f:
+        #     f.write(" ".join(map(str, (filename, is_dll, is_so, is_extension, ""))))
+        #     f.write("\n")
+        if (is_dll or is_so) and not is_extension:
+            return True
+        return False
+
     if os.path.exists(record_path):
         with open(record_path) as f:
             for line in f:
                 if not line:
                     continue
-                filename = line.split(",")[0].lower()
-                if filename.endswith(".dll") or filename.endswith(".so"):
+                filename = line.split(",")[0]
+                if is_shared_lib(filename):
                     extensions.append(filename)
     return extensions
 
@@ -232,6 +245,11 @@ def main():
         help="Specified to replace pip dependencies with bazel targets. Example: "
         + "--override=@com_google_protobuf//:protobuf_python=protobuf",
     )
+    parser.add_argument(
+        "--cc_import",
+        action="store_true",
+        help="Use cc_import() for non-C-extension binaries",
+    )
 
     args, pip_args = parser.parse_known_args()
 
@@ -241,18 +259,28 @@ def main():
 
     pkg = install_package(args.package, args.directory, pip_args)
 
-    extensions = _parse_extensions(pkg.filename)
-    cc_import_names = [name.replace("/", "__").replace(".", "_") for name in extensions]
-    cc_imports = [
-        """
+    extensions = _parse_shared_libs(pkg.filename)
+    if args.cc_import:
+        cc_import_names = [name.replace("/", "__").replace(".", "_") for name in extensions]
+        cc_imports = [
+            """
 cc_import(
-    name = "{name}",
+    name = "{name}_raw",
     shared_library = "{filename}",
+)
+expose_cc_import_as_runfiles(
+    name = "{name}",
+    src = "{name}_raw",
 )""".format(
-            name=name, filename=filename
-        )
-        for name, filename in zip(cc_import_names, extensions)
-    ]
+                name=name, filename=filename
+            )
+            for name, filename in zip(cc_import_names, extensions)
+        ]
+        cc_import_excludes = extensions
+    else:
+        cc_import_names = []
+        cc_imports = []
+        cc_import_excludes = []
 
     extras_list = [
         """
@@ -299,10 +327,20 @@ py_binary(
     # args.override looks like a list of replacement=requirement
     overrides = dict(rep.split("=") for rep in args.override)
 
+    def _indent_8(lst):
+        return ",\n        ".join(lst)
+
+    def _as_quoted(target):
+        return '"{}"'.format(target)
+
+    def _as_label(target):
+        return '":{}"'.format(target)
+
     result = """
 package(default_visibility = ["//visibility:public"])
 
 load("{requirements}//:requirements.bzl", "requirement")
+load("@com_github_ali5h_rules_pip//:internal.bzl", "expose_cc_import_as_runfiles")
 
 py_library(
     name = "pkg",
@@ -316,8 +354,7 @@ py_library(
         "BUILD",
         "WORKSPACE",
         "__pycache__",
-        "**/*.so",
-        "**/*.dll",
+        {cc_import_excludes}
     ]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
@@ -338,17 +375,16 @@ filegroup(
 
 {extras}""".format(
         requirements=args.requirements,
-        dependencies=",\n        ".join(
+        dependencies=_indent_8(
             [
                 '"%s"' % overrides[d] if d in overrides else 'requirement("%s")' % d
                 for d in dependencies(pkg)
             ]
         ),
         entry_points=entry_points_str,
-        cc_import_deps=",\n        ".join(
-            '"{}"'.format(name) for name in cc_import_names
-        ),
+        cc_import_deps=_indent_8(map(_as_label, cc_import_names)),
         cc_imports="\n".join(cc_imports),
+        cc_import_excludes=_indent_8(map(_as_quoted, cc_import_excludes)),
         extras=extras,
     )
 

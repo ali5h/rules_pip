@@ -56,6 +56,8 @@ def _pip_import_impl(repository_ctx):
 
     for label, pipdep in repository_ctx.attr.overrides.items():
         args += ["--override=%s=%s" % (label, pipdep)]
+    if repository_ctx.attr.cc_import:
+        args += ["--cc_import"]
 
     result = _execute(repository_ctx, args, quiet = repository_ctx.attr.quiet)
     if result.return_code:
@@ -96,6 +98,7 @@ pip_import(
 This replaces "protobuf" with the bazel version even for indirect dependencies on it.
 """),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
+        "cc_import": attr.bool(doc = "Enable cc_import() for shared libraries."),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:piptool.py"),
@@ -148,6 +151,8 @@ def _whl_impl(repository_ctx):
         ]
     for label, pipdep in repository_ctx.attr.overrides.items():
         args += ["--override=%s=%s" % (label, pipdep)]
+    if repository_ctx.attr.cc_import:
+        args += ["--cc_import"]
 
     args += pip_args
 
@@ -171,6 +176,7 @@ If the label is specified it will overwrite the python_interpreter attribute.
         "pip_args": attr.string_list(default = []),
         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
         "overrides": attr.label_keyed_string_dict(),
+        "cc_import": attr.bool(),
         "_script": attr.label(
             executable = True,
             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
