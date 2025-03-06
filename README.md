@@ -1,5 +1,7 @@
 # Bazel pip rules
 
+__NOTE__: This project is adopted by rules_python. Please use official rules.
+
 ## Overview
 
 This repository provides support for installing `pip` packages. Usage
